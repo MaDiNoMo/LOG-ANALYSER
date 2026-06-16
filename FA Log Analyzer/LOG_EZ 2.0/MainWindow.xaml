@@ -358,24 +358,48 @@
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
 
-                                    <TreeView x:Name="ActualSequenceTree" Grid.Column="0" Background="Transparent" BorderThickness="0" 
-          ScrollViewer.VerticalScrollBarVisibility="Auto" 
-          ScrollViewer.ScrollChanged="OnTreeScrollChanged"/>
+                                    <TreeView x:Name="ActualSequenceTree" Grid.Column="0" Background="Transparent" BorderThickness="0" Foreground="{StaticResource TextMainBrush}" Margin="0,10,0,0" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                                        <TreeView.Template>
+                                            <ControlTemplate TargetType="TreeView">
+                                                <ScrollViewer x:Name="PART_ActualScroller" HorizontalScrollBarVisibility="Disabled">
+                                                    <ItemsPresenter/>
+                                                </ScrollViewer>
+                                            </ControlTemplate>
+                                        </TreeView.Template>
+                                    </TreeView>
 
-                                    <Separator Grid.Column="1" Width="2" Margin="10,0,10,0" Background="{StaticResource PanelBorderBrush}">
-                                        <Separator.LayoutTransform>
-                                            <RotateTransform Angle="90"/>
-                                        </Separator.LayoutTransform>
-                                    </Separator>
+                                    <TreeView x:Name="ExpectedSequenceTree" Grid.Column="2" Background="Transparent" BorderThickness="0" Foreground="{StaticResource TextMainBrush}" Margin="0,10,0,0" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                                        <TreeView.Template>
+                                            <ControlTemplate TargetType="TreeView">
+                                                <ScrollViewer x:Name="PART_ExpectedScroller" HorizontalScrollBarVisibility="Disabled">
+                                                    <ItemsPresenter/>
+                                                </ScrollViewer>
+                                            </ControlTemplate>
+                                        </TreeView.Template>
+                                    </TreeView>
 
-                                    <TreeView x:Name="ExpectedSequenceTree" Grid.Column="2" Background="Transparent" BorderThickness="0" 
-          ScrollViewer.VerticalScrollBarVisibility="Auto" 
-          ScrollViewer.ScrollChanged="OnTreeScrollChanged"/>
                                 </Grid>
                             </Border>
 
                             <Border Grid.Row="2" Background="#282C34" BorderBrush="{StaticResource PanelBorderBrush}" BorderThickness="1" CornerRadius="4" Margin="0,10,0,0" Padding="10">
-                                <TextBlock x:Name="AnalysisSummaryText" Text="Waiting for Analysis Run..." FontSize="14" Foreground="{StaticResource TextMainBrush}" FontWeight="Bold" HorizontalAlignment="Center"/>
+
+                                <StackPanel Orientation="Vertical" HorizontalAlignment="Center">
+
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,10">
+                                        <Ellipse Width="12" Height="12" Fill="#98C379" Margin="0,0,6,0"/>
+                                        <TextBlock Text="Perfect Match" Foreground="#98C379" FontWeight="Bold" Margin="0,0,25,0"/>
+
+                                        <Ellipse Width="12" Height="12" Fill="#E5C07B" Margin="0,0,6,0"/>
+                                        <TextBlock Text="Missing / Extra Node" Foreground="#E5C07B" FontWeight="Bold" Margin="0,0,25,0"/>
+
+                                        <Ellipse Width="12" Height="12" Fill="#E06C75" Margin="0,0,6,0"/>
+                                        <TextBlock Text="Sequence Mismatch" Foreground="#E06C75" FontWeight="Bold"/>
+                                    </StackPanel>
+
+                                    <TextBlock x:Name="AnalysisSummaryText" Text="Waiting for Analysis Run..." FontSize="14" Foreground="{StaticResource TextMainBrush}" FontWeight="Bold" HorizontalAlignment="Center"/>
+
+                                </StackPanel>
+
                             </Border>
                         </Grid>
                     </Border>

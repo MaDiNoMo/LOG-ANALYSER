@@ -1,16 +1,12 @@
-﻿#nullable disable
-using Microsoft.Win32;
-using System;
-using System.Collections.Generic;
+﻿using Microsoft.Win32;
 using System.IO;
-using System.Linq;
-using System.Runtime.InteropServices;
-using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
 using System.Windows.Input;
 using System.Xml.Linq;
+using System.Collections.Generic;
+using System;
+using System.Linq;
 
 namespace LOG_EZ
 {
@@ -18,77 +14,95 @@ namespace LOG_EZ
     {
         private readonly string filePath = @"C:\Users\ArJuN\OneDrive\Documents\sequencesaver\Sequence.xml";
         private bool showAllData = false;
-        
-        // Dictionary to hold EVENTS.txt mappings
-        //private Dictionary<string, string> ceidEventMap = new Dictionary<string, string>();
+        private ScrollViewer _actualScrollViewer;
+        private ScrollViewer _expectedScrollViewer;
+        private bool _isSyncingScroll = false;
 
         public MainWindow()
         {
             InitializeComponent();
             if (TreeView1 != null) TreeView1.ContextMenu = null;
 
-            // Load EVENTS.txt silently from the hardcoded directory!
             EventMapper.LoadEventMapping(@"C:\Users\ArJuN\OneDrive\Documents\project phase 1\EVENTS.txt");
 
             InitializeSecsPalette();
             InitializeMockDatabase();
+
+            // NEW: Wait for the window to finish drawing, then grab the scroll bars!
+            this.Loaded += MainWindow_Loaded;
         }
-        // ==========================================t
-        // EVENTS.TXT DICTIONARY PARSER for tab 2
-        // ==========================================
-        //private void LoadEventMapping(string eventFilePath)//for event file browse
-        //{
-        //    ceidEventMap.Clear();
-        //    try
-        //    {
-        //        if (File.Exists(eventFilePath))
-        //        {
-        //            foreach (string line in File.ReadLines(eventFilePath))
-        //            {
-        //                var parts = line.Split(new[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries);
-        //                if (parts.Length >= 2)
-        //                {
-        //                    ceidEventMap[parts[0].Trim()] = parts[1].Trim();
-        //                }
-        //            }
-        //        }
-        //    }
-        //    catch { MessageBox.Show("Failed to parse EVENTS.txt file."); }
-        //}
+        private void MainWindow_Loaded(object sender, RoutedEventArgs e)
+        {
+            // Force the templates to build
+            ActualSequenceTree.ApplyTemplate();
+            ExpectedSequenceTree.ApplyTemplate();
 
-        //private string GetEventName(string ceid)
-        //{
-        //    if (ceidEventMap.TryGetValue(ceid, out string name)) return name;
-        //    return ""; // Returns clean empty string if no match is found
-        //}
+            // Get the scrollers by the names we just defined in XAML
+            var actualScroll = ActualSequenceTree.Template.FindName("PART_ActualScroller", ActualSequenceTree) as ScrollViewer;
+            var expectedScroll = ExpectedSequenceTree.Template.FindName("PART_ExpectedScroller", ExpectedSequenceTree) as ScrollViewer;
+
+            if (actualScroll != null && expectedScroll != null)
+            {
+                // This links them together at the WPF Engine level
+                // Whenever one scrolls, the other mirrors it automatically
+                actualScroll.ScrollChanged += (s, args) => {
+                    if (Math.Abs(expectedScroll.VerticalOffset - actualScroll.VerticalOffset) > 1.0)
+                        expectedScroll.ScrollToVerticalOffset(actualScroll.VerticalOffset);
+                };
+
+                expectedScroll.ScrollChanged += (s, args) => {
+                    if (Math.Abs(actualScroll.VerticalOffset - expectedScroll.VerticalOffset) > 1.0)
+                        actualScroll.ScrollToVerticalOffset(expectedScroll.VerticalOffset);
+                };
+            }
+        }
 
         // ==========================================
-        // DATA STRUCTURE & CONVERTER
+        // SYNCHRONIZED SCROLLING LOGIC
         // ==========================================
-        
+        private void ScrollViewer_ScrollChanged(object sender, ScrollChangedEventArgs e)
+        {
+            if (_isSyncingScroll) return;
 
-        //public class HeaderToIconConverter : IValueConverter
-        //{
-        //    public object Convert(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture) => null;
-        //    public object ConvertBack(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture) => throw new NotImplementedException();
-        //}
+            var scroller = sender as ScrollViewer;
+            if (scroller == null) return;
+
+            _isSyncingScroll = true;
+            try
+            {
+                if (scroller == _actualScrollViewer && _expectedScrollViewer != null)
+                {
+                    // Sync by percentage to ensure they stay locked even if content varies
+                    double ratio = scroller.VerticalOffset / scroller.ScrollableHeight;
+                    if (!double.IsNaN(ratio))
+                        _expectedScrollViewer.ScrollToVerticalOffset(ratio * _expectedScrollViewer.ScrollableHeight);
+                }
+                else if (scroller == _expectedScrollViewer && _actualScrollViewer != null)
+                {
+                    double ratio = scroller.VerticalOffset / scroller.ScrollableHeight;
+                    if (!double.IsNaN(ratio))
+                        _actualScrollViewer.ScrollToVerticalOffset(ratio * _actualScrollViewer.ScrollableHeight);
+                }
+            }
+            finally { _isSyncingScroll = false; }
+        }
 
         // ==========================================
         // UI TOGGLE HANDLERS & HELPERS
         // ==========================================
-        private void Tab2TimeToggle_Checked(object sender, RoutedEventArgs e)//for filter by time (radio buttons) tab 2
+        private void Tab2TimeToggle_Checked(object sender, RoutedEventArgs e)
         {
             if (Tab2TimeGrid != null && Tab2FilterRadio != null)
                 Tab2TimeGrid.Visibility = Tab2FilterRadio.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
         }
 
-        private void Tab3TimeToggle_Checked(object sender, RoutedEventArgs e)//for filter by time (radio buttons) tab 3
+        private void Tab3TimeToggle_Checked(object sender, RoutedEventArgs e)
         {
             if (Tab3TimeGrid != null && Tab3FilterRadio != null)
                 Tab3TimeGrid.Visibility = Tab3FilterRadio.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
         }
 
-        private void OnToggleViewClick(object sender, RoutedEventArgs e)//its for tab 3 show all event button on the top right
+        private void OnToggleViewClick(object sender, RoutedEventArgs e)
         {
             if (ViewModeToggle != null)
             {
@@ -97,76 +111,13 @@ namespace LOG_EZ
                 OnSearchLogsClick(null, null);
             }
         }
-        
-        /// ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-     
-        
 
         private DateTime CombineDateTime(DateTime? date, string timeStr, bool isEnd)
         {
-            DateTime baseDate = date ?? DateTime.Today; 
+            DateTime baseDate = date ?? DateTime.Today;
             if (TimeSpan.TryParse(timeStr, out TimeSpan time)) return baseDate.Add(time);
             return isEnd ? baseDate.AddDays(1).AddTicks(-1) : baseDate;
         }
-
-        // ==========================================
-        // CORE PARSING ENGINE
-        // ==========================================
-        //private List<LogEvent> ParseLog(string path, bool useFilter, DateTime start, DateTime end)
-        //{
-        //    var list = new List<LogEvent>();
-        //    var regexSF = new Regex(@"(S\d+F\d+)\s*W=([01])");
-        //    var regexApp = new Regex(@"\)\s*(Sdr[a-zA-Z]+)");
-
-        //    string lastTs = "UNKNOWN", lastApp = "Unknown";
-        //    bool capS6 = false; int intCount = 0;
-        //    string curD = "-", curC = "-", curR = "-";
-        //    int currentLine = 0;
-
-        //    foreach (string line in File.ReadLines(path))
-        //    {
-        //        currentLine++;
-        //        if (line.Length >= 19 && DateTime.TryParse(line.Substring(0, 19), out _))
-        //        {
-        //            lastTs = line.Substring(0, 19);
-        //            var appMatch = regexApp.Match(line);
-        //            if (appMatch.Success) lastApp = appMatch.Groups[1].Value;
-        //        }
-
-        //        var sfMatch = regexSF.Match(line);
-        //        if (sfMatch.Success)
-        //        {
-        //            string sf = sfMatch.Groups[1].Value;
-        //            string w = sfMatch.Groups[2].Value;
-
-        //            if (sf == "S6F11") { capS6 = true; intCount = 0; curD = "-"; curC = "-"; curR = "-"; }
-        //            else
-        //            {
-        //                if (!useFilter || (DateTime.TryParse(lastTs, out DateTime t) && t >= start && t <= end))
-        //                    list.Add(new LogEvent { LogDate = lastTs.Substring(0, 10), LogTime = lastTs.Substring(11), Timestamp = lastTs, SdrMessage = lastApp, Protocol = sf, WaitBit = w, LineNumber = currentLine });
-        //                capS6 = false;
-        //            }
-        //        }
-        //        else if (capS6 && (line.Contains("<U") || line.Contains("<I")))
-        //        {
-        //            intCount++;
-        //            var parts = line.Split(new char[] { '<', ' ', '>' }, StringSplitOptions.RemoveEmptyEntries);
-        //            if (parts.Length >= 2)
-        //            {
-        //                if (intCount == 1) curD = parts[1].Trim();
-        //                else if (intCount == 2) curC = parts[1].Trim();
-        //                else if (intCount == 3)
-        //                {
-        //                    curR = parts[1].Trim();
-        //                    if (!useFilter || (DateTime.TryParse(lastTs, out DateTime t) && t >= start && t <= end))
-        //                        list.Add(new LogEvent { LogDate = lastTs.Substring(0, 10), LogTime = lastTs.Substring(11), Timestamp = lastTs, SdrMessage = lastApp, Protocol = "S6F11", WaitBit = "1", DataID = curD, CEID = curC, ReportID = curR, LineNumber = currentLine });
-        //                    capS6 = false;
-        //                }
-        //            }
-        //        }
-        //    }
-        //    return list;
-        //}
 
         // ==========================================
         // TAB 2: ANALYSIS ENGINE (DUAL TREES)
@@ -180,46 +131,12 @@ namespace LOG_EZ
             if (openFileDialog.ShowDialog() == true)
             {
                 LogPathTextBox.Text = openFileDialog.FileName;
-
-                // NEW: Trigger the date scanner!
                 UpdateDatePickersFromLog(openFileDialog.FileName);
             }
         }
+
         // ==========================================
-        // SYNCHRONIZED SCROLLING LOGIC
-        // ==========================================
-        private bool _isSyncingScroll = false;
-
-        private void OnTreeScrollChanged(object sender, ScrollChangedEventArgs e)
-        {
-            // Prevent infinite loop where Tree A updates Tree B, which updates Tree A...
-            if (_isSyncingScroll) return;
-
-            var changedScrollViewer = e.OriginalSource as ScrollViewer;
-            if (changedScrollViewer == null) return;
-
-            _isSyncingScroll = true;
-
-            try
-            {
-                if (sender == ActualSequenceTree)
-                {
-                    var targetScrollViewer = GetScrollViewer(ExpectedSequenceTree);
-                    targetScrollViewer?.ScrollToVerticalOffset(e.VerticalOffset);
-                }
-                else if (sender == ExpectedSequenceTree)
-                {
-                    var targetScrollViewer = GetScrollViewer(ActualSequenceTree);
-                    targetScrollViewer?.ScrollToVerticalOffset(e.VerticalOffset);
-                }
-            }
-            finally
-            {
-                _isSyncingScroll = false;
-            }
-        }
-        // ==========================================
-        // SYNCHRONIZED TREE EXPANSION
+        // SYNCHRONIZED DEEP TREE EXPANSION
         // ==========================================
         private bool _isSyncingExpand = false;
 
@@ -227,40 +144,31 @@ namespace LOG_EZ
         {
             if (_isSyncingExpand) return;
             var tvi = sender as TreeViewItem;
-            if (tvi == null) return;
 
-            // Only react to the node itself expanding, not its children
-            if (e.OriginalSource != tvi) return;
+            // Only react to the root node itself being clicked
+            if (tvi == null || e.OriginalSource != tvi) return;
 
             _isSyncingExpand = true;
             try
             {
-                TreeView sourceTree = null;
-                TreeView targetTree = null;
+                bool isExpanded = tvi.IsExpanded;
 
-                // Figure out which side was clicked
-                if (ActualSequenceTree.Items.Contains(tvi))
-                {
-                    sourceTree = ActualSequenceTree;
-                    targetTree = ExpectedSequenceTree;
-                }
-                else if (ExpectedSequenceTree.Items.Contains(tvi))
-                {
-                    sourceTree = ExpectedSequenceTree;
-                    targetTree = ActualSequenceTree;
-                }
+                // 1. Force the clicked side to pop open all nested [Lists]!
+                if (isExpanded) tvi.ExpandSubtree();
 
-                // Expand/Collapse the exact same index on the opposite side
-                if (sourceTree != null && targetTree != null)
+                // Figure out which tree we need to sync
+                TreeView sourceTree = ActualSequenceTree.Items.Contains(tvi) ? ActualSequenceTree : ExpectedSequenceTree;
+                TreeView targetTree = sourceTree == ActualSequenceTree ? ExpectedSequenceTree : ActualSequenceTree;
+
+                // 2. Expand the exact same index on the opposite side deeply
+                int index = sourceTree.Items.IndexOf(tvi);
+                if (index >= 0 && index < targetTree.Items.Count)
                 {
-                    int index = sourceTree.Items.IndexOf(tvi);
-                    if (index >= 0 && index < targetTree.Items.Count)
+                    var targetNode = targetTree.Items[index] as TreeViewItem;
+                    if (targetNode != null)
                     {
-                        var targetNode = targetTree.Items[index] as TreeViewItem;
-                        if (targetNode != null)
-                        {
-                            targetNode.IsExpanded = tvi.IsExpanded;
-                        }
+                        targetNode.IsExpanded = isExpanded;
+                        if (isExpanded) targetNode.ExpandSubtree();
                     }
                 }
             }
@@ -269,6 +177,7 @@ namespace LOG_EZ
                 _isSyncingExpand = false;
             }
         }
+
         // ==========================================
         // DYNAMIC DATE PICKER CONSTRAINTS
         // ==========================================
@@ -279,7 +188,6 @@ namespace LOG_EZ
 
             try
             {
-                // Fast scan the file to find the minimum and maximum dates
                 foreach (string line in File.ReadLines(path))
                 {
                     if (line.Length >= 19 && DateTime.TryParse(line.Substring(0, 19), out DateTime dt))
@@ -289,16 +197,13 @@ namespace LOG_EZ
                     }
                 }
 
-                // If dates were successfully found, lock the UI controls
                 if (minDate.HasValue && maxDate.HasValue)
                 {
-                    // Restrict Calendars to valid ranges
                     Tab2StartDate.DisplayDateStart = Tab3StartDate.DisplayDateStart = minDate.Value;
                     Tab2StartDate.DisplayDateEnd = Tab3StartDate.DisplayDateEnd = maxDate.Value;
                     Tab2EndDate.DisplayDateStart = Tab3EndDate.DisplayDateStart = minDate.Value;
                     Tab2EndDate.DisplayDateEnd = Tab3EndDate.DisplayDateEnd = maxDate.Value;
 
-                    // Auto-select the edges of the range
                     Tab2StartDate.SelectedDate = Tab3StartDate.SelectedDate = minDate.Value;
                     Tab2EndDate.SelectedDate = Tab3EndDate.SelectedDate = maxDate.Value;
                 }
@@ -306,176 +211,13 @@ namespace LOG_EZ
             catch { /* Silently skip if reading fails */ }
         }
 
-        // Helper method to dig into the TreeView's visual structure and extract its hidden ScrollViewer
-        private ScrollViewer GetScrollViewer(DependencyObject obj)
-        {
-            if (obj is ScrollViewer sv) return sv;
-
-            for (int i = 0; i < System.Windows.Media.VisualTreeHelper.GetChildrenCount(obj); i++)
-            {
-                var child = System.Windows.Media.VisualTreeHelper.GetChild(obj, i);
-                var result = GetScrollViewer(child);
-                if (result != null) return result;
-            }
-            return null;
-        }
-        //private void OnUploadEventMapClick(object sender, RoutedEventArgs e)
-        //{
-        //    OpenFileDialog openFileDialog = new OpenFileDialog();
-        //    openFileDialog.Filter = "Text files (*.txt)|*.txt|All files (*.*)|*.*";
-        //    openFileDialog.Title = "Select EVENTS.txt Mapping File";
-
-        //    if (openFileDialog.ShowDialog() == true)
-        //    {
-        //        //EventMapTextBox.Text = openFileDialog.FileName;
-        //        LoadEventMapping(openFileDialog.FileName);
-        //    }
-        //}
-
-
-        // ==========================================
-        // TAB 2: ANALYSIS ENGINE (STRICT MODE)
-        // ==========================================
-        //private void OnAnalyseRunClick(object sender, RoutedEventArgs e)
-        //{
-        //    if (string.IsNullOrWhiteSpace(LogPathTextBox.Text) || AnalysisSequenceComboBox.SelectedItem == null)
-        //    {
-        //        MessageBox.Show("Please upload a log file and select a sequence first!", "Ready to Run", MessageBoxButton.OK, MessageBoxImage.Information);
-        //        return;
-        //    }
-
-        //    ActualSequenceTree.Items.Clear();
-        //    ExpectedSequenceTree.Items.Clear();
-        //    AnalysisSummaryText.Text = "Analyzing SDR Log...";
-        //    AnalysisSummaryText.Foreground = new System.Windows.Media.SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#61AFEF"));
-
-        //    bool applyTimeFilter = Tab2FilterRadio.IsChecked == true;
-        //    DateTime start = DateTime.MinValue, end = DateTime.MaxValue;
-        //    if (applyTimeFilter)
-        //    {
-        //        start = CombineDateTime(Tab2StartDate.SelectedDate, Tab2StartTime.Text, false);
-        //        end = CombineDateTime(Tab2EndDate.SelectedDate, Tab2EndTime.Text, true);
-        //    }
-
-        //    string seqTag = ((ComboBoxItem)AnalysisSequenceComboBox.SelectedItem).Tag.ToString();
-        //    XDocument seqDoc = XDocument.Load(filePath);
-        //    var expectedEvents = new List<LogEvent>();
-
-        //    foreach (var s6f11Node in seqDoc.Root?.Element(seqTag)?.Elements("S6F11") ?? Enumerable.Empty<XElement>())
-        //    {
-        //        expectedEvents.Add(new LogEvent
-        //        {
-        //            DataID = s6f11Node.Descendants("Data_ID").FirstOrDefault()?.Value ?? "*",
-        //            CEID = s6f11Node.Descendants("CEID").FirstOrDefault()?.Value ?? "*",
-        //            ReportID = s6f11Node.Descendants("Report_ID").FirstOrDefault()?.Value ?? "*"
-        //        });
-        //    }
-
-        //    if (expectedEvents.Count == 0)
-        //    {
-        //        AnalysisSummaryText.Text = "ERROR: Sequence contains no S6F11 data!";
-        //        AnalysisSummaryText.Foreground = new System.Windows.Media.SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#E06C75"));
-        //        return;
-        //    }
-
-        //    var actualEvents = ParseLog(LogPathTextBox.Text, applyTimeFilter, start, end);
-
-        //    int highestIndexReached = -1;
-        //    int perfectMatches = 0;
-
-        //    var actualStatuses = new Dictionary<LogEvent, string>();
-        //    var expectedStatuses = new Dictionary<LogEvent, string>();
-
-        //    // STRICT TRACKER: Keep track of every event we actually "use"
-        //    var matchedActualEvents = new HashSet<LogEvent>();
-
-        //    foreach (var a in actualEvents.Where(x => x.Protocol == "S6F11")) actualStatuses[a] = "#ABB2BF";
-
-        //    for (int i = 0; i < expectedEvents.Count; i++)
-        //    {
-        //        var target = expectedEvents[i];
-
-        //        bool IsMatch(LogEvent ev) =>
-        //            ev.Protocol == "S6F11" &&
-        //            !matchedActualEvents.Contains(ev) && // Prevents matching the same log event twice!
-        //            (target.DataID == "*" || target.DataID == ev.DataID) &&
-        //            (target.CEID == "*" || target.CEID == ev.CEID) &&
-        //            (target.ReportID == "*" || target.ReportID == ev.ReportID);
-
-        //        int foundIndex = actualEvents.FindIndex(Math.Max(0, highestIndexReached), IsMatch);
-
-        //        if (foundIndex != -1)
-        //        {
-        //            var ev = actualEvents[foundIndex];
-        //            actualStatuses[ev] = "#98C379";
-        //            expectedStatuses[target] = "#98C379";
-        //            highestIndexReached = foundIndex;
-        //            perfectMatches++;
-        //            matchedActualEvents.Add(ev);
-        //        }
-        //        else
-        //        {
-        //            int previousIndex = actualEvents.FindIndex(0, IsMatch);
-        //            if (previousIndex != -1 && previousIndex < highestIndexReached)
-        //            {
-        //                var ev = actualEvents[previousIndex];
-        //                actualStatuses[ev] = "#E06C75"; // RED: Event exists but is completely out of order!
-        //                expectedStatuses[target] = "#E06C75";
-        //                matchedActualEvents.Add(ev);
-        //            }
-        //            else
-        //            {
-        //                expectedStatuses[target] = "#E06C75"; // RED: Completely missing from log!
-        //            }
-        //        }
-        //    }
-
-        //    // STRICT ENFORCEMENT: Flag any unexpected/extra messages in the log!
-        //    int extraMessages = 0;
-        //    foreach (var a in actualEvents.Where(x => x.Protocol == "S6F11"))
-        //    {
-        //        if (!matchedActualEvents.Contains(a))
-        //        {
-        //            actualStatuses[a] = "#E06C75"; // RED: This message shouldn't be here!
-        //            extraMessages++;
-        //        }
-        //    }
-
-        //    foreach (var a in actualEvents.Where(x => x.Protocol == "S6F11")) ActualSequenceTree.Items.Add(CreateReadOnlyS6F11Node(a, actualStatuses[a]));
-        //    foreach (var target in expectedEvents) ExpectedSequenceTree.Items.Add(CreateReadOnlyS6F11Node(target, expectedStatuses[target]));
-
-        //    // STRICT SUMMARY: It only goes Green if EVERYTHING is completely perfect
-        //    if (perfectMatches == expectedEvents.Count && extraMessages == 0)
-        //    {
-        //        AnalysisSummaryText.Text = $"ANALYSIS COMPLETE | Perfect Strict Sequence! ({perfectMatches} Matches)";
-        //        AnalysisSummaryText.Foreground = new System.Windows.Media.SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#98C379"));
-        //    }
-        //    else
-        //    {
-        //        AnalysisSummaryText.Text = $"ANALYSIS FAILED | Expected: {perfectMatches}/{expectedEvents.Count} | Unexpected Extras: {extraMessages}";
-        //        AnalysisSummaryText.Foreground = new System.Windows.Media.SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#E06C75"));
-        //    }
-        //}
-
-        // ==========================================
-        // C++ LOG PARSE ENGINE (INTEROP)
-        // ==========================================
-        
-
-
-        
-
-
+       
         // ==========================================
         // TAB 2: RUN ANALYSIS
         // ==========================================
         private void OnAnalyseRunClick(object sender, RoutedEventArgs e)
         {
-            if (string.IsNullOrWhiteSpace(LogPathTextBox.Text) || AnalysisSequenceComboBox.SelectedItem == null)
-            {
-                MessageBox.Show("Please upload a log file and select a sequence first!", "Ready to Run", MessageBoxButton.OK, MessageBoxImage.Information);
-                return;
-            }
+            if (string.IsNullOrWhiteSpace(LogPathTextBox.Text) || AnalysisSequenceComboBox.SelectedItem == null) return;
 
             ActualSequenceTree.Items.Clear();
             ExpectedSequenceTree.Items.Clear();
@@ -485,34 +227,38 @@ namespace LOG_EZ
             string startT = "", endT = "";
             if (Tab2FilterRadio.IsChecked == true)
             {
-                // Format matching the C++ string ISO format
                 startT = CombineDateTime(Tab2StartDate.SelectedDate, Tab2StartTime.Text, false).ToString("yyyy-MM-dd HH:mm:ss");
                 endT = CombineDateTime(Tab2EndDate.SelectedDate, Tab2EndTime.Text, true).ToString("yyyy-MM-dd HH:mm:ss");
             }
 
-            // 1. Serialize the Expected List into a String for C++
             string seqTag = ((ComboBoxItem)AnalysisSequenceComboBox.SelectedItem).Tag.ToString();
             XDocument seqDoc = XDocument.Load(filePath);
-
             var expectedStringList = new List<string>();
+
             foreach (var s6f11Node in seqDoc.Root?.Element(seqTag)?.Elements("S6F11") ?? Enumerable.Empty<XElement>())
             {
-                // Added .Trim() to safely wipe out spaces in your XML file!
                 string d = s6f11Node.Descendants("Data_ID").FirstOrDefault()?.Value?.Trim() ?? "*";
                 string c = s6f11Node.Descendants("CEID").FirstOrDefault()?.Value?.Trim() ?? "*";
                 string r = s6f11Node.Descendants("Report_ID").FirstOrDefault()?.Value?.Trim() ?? "*";
                 expectedStringList.Add($"{d},{c},{r}");
             }
-            string expectedListStr = string.Join(";", expectedStringList);
 
+            string expectedListStr = string.Join(";", expectedStringList);
             if (expectedStringList.Count == 0) return;
 
-            // 2. Define the Callbacks to receive data from C++
-            SdrEngine.ResultCallback resCb = (isExpected, ts, d, c, r, color) =>
+            SdrEngine.ResultCallback resCb = (isExpected, ts, d, c, r, colorHex) =>
             {
-                // Rebuild the LogEvent temporarily to feed your existing UI Node builder
-                var ev = new LogEvent { Timestamp = ts, DataID = d, CEID = c, ReportID = r };
-                var node = CreateReadOnlyS6F11Node(ev, color);
+                TreeViewItem node;
+
+                if (colorHex == "#BLANK")
+                {
+                    node = CreateBlankNode();
+                }
+                else
+                {
+                    var ev = new LogEvent { Timestamp = ts, DataID = d, CEID = c, ReportID = r };
+                    node = CreateReadOnlyS6F11Node(ev, colorHex);
+                }
 
                 if (isExpected) ExpectedSequenceTree.Items.Add(node);
                 else ActualSequenceTree.Items.Add(node);
@@ -532,41 +278,54 @@ namespace LOG_EZ
                 }
             };
 
-            // 3. Fire the C++ Engine!
-            // 3. Fire the C++ Engine!
             try
             {
                 SdrEngine.CompareLogSequence(LogPathTextBox.Text, startT, endT, expectedListStr, resCb, sumCb);
             }
             catch (Exception ex)
             {
-                // This will catch ANY error (Architecture mismatch, Entry Point errors, etc.)
                 MessageBox.Show($"C++ Engine Error:\n\n{ex.Message}", "Fatal Interop Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
+        }
+
+        // ==========================================
+        // NODE GENERATORS
+        // ==========================================
+        private TreeViewItem CreateBlankNode()
+        {
+            var rootNode = new TreeViewItem { IsExpanded = false, Focusable = false };
+
+            rootNode.Header = new TextBlock
+            {
+                Text = "-------------------",
+                Foreground = new System.Windows.Media.SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#5C6370")),
+                FontFamily = new System.Windows.Media.FontFamily("Consolas"),
+                FontWeight = FontWeights.Bold,
+                VerticalAlignment = VerticalAlignment.Center,
+                Margin = new Thickness(0, 4, 0, 4)
+            };
+
+            return rootNode;
         }
 
         private TreeViewItem CreateReadOnlyS6F11Node(LogEvent ev, string colorHex)
         {
             string eventName = EventMapper.GetEventName(ev.CEID);
-
-            string headerText = string.IsNullOrEmpty(eventName)
-                ? $"S6F11_{ev.CEID}"
-                : $"S6F11_{ev.CEID}_{eventName}";
+            string headerText = string.IsNullOrEmpty(eventName) ? $"S6F11_{ev.CEID}" : $"S6F11_{ev.CEID}_{eventName}";
 
             var rootNode = new TreeViewItem { IsExpanded = false, Focusable = false };
-
-            // NEW: Wire up the synchronized expansion logic!
             rootNode.Expanded += SyncTreeNodes;
             rootNode.Collapsed += SyncTreeNodes;
 
-            var headerBlock = new TextBlock
+            rootNode.Header = new TextBlock
             {
                 Text = headerText,
                 Foreground = new System.Windows.Media.SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString(colorHex)),
                 FontFamily = new System.Windows.Media.FontFamily("Consolas"),
-                FontWeight = FontWeights.Bold
+                FontWeight = FontWeights.Bold,
+                VerticalAlignment = VerticalAlignment.Center,
+                Margin = new Thickness(0, 4, 0, 4)
             };
-            rootNode.Header = headerBlock;
 
             var outerList = new TreeViewItem { Header = "[List]", IsExpanded = false, Focusable = false };
             outerList.Items.Add(CreateReadOnlyTagRow("Data_ID", ev.DataID));
@@ -591,6 +350,18 @@ namespace LOG_EZ
 
             rowItem.Header = panel;
             return rowItem;
+        }
+
+        private string ExtractTagValue(TreeViewItem item)
+        {
+            if (item == null) return "-";
+            var panel = item.Header as StackPanel;
+            if (panel != null && panel.Children.Count > 1)
+            {
+                var textBlock = panel.Children[1] as TextBlock;
+                return textBlock?.Text.Replace("[", "").Replace("]", "").Trim() ?? "-";
+            }
+            return "-";
         }
 
         // ==========================================
@@ -633,11 +404,8 @@ namespace LOG_EZ
             ExploreStatsText.Text = $"Found: {finalResults.Count} matching events";
         }
 
-
         // ==========================================
         // AUTO-EXTRACT SEQUENCE FROM LOG FILE
-        // ==========================================
-       
         // ==========================================
         private void BtnAutoExtract_Click(object sender, RoutedEventArgs e)
         {
@@ -699,8 +467,6 @@ namespace LOG_EZ
             // 3. Save Button
             Button btnSave = new Button { Content = "EXTRACT & SAVE SEQUENCE", Height = 40, Background = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(198, 120, 221)), Foreground = System.Windows.Media.Brushes.Black, FontWeight = FontWeights.Bold };
 
-
-            // --- SMART LOGIC: Helper function to apply constraints ---
             Action<string> ApplyFileConstraints = (path) =>
             {
                 txtFile.Text = path;
@@ -728,13 +494,11 @@ namespace LOG_EZ
                 catch { }
             };
 
-            // --- SMART LOGIC: Auto-load the file from Tab 2 if it exists! ---
             if (!string.IsNullOrWhiteSpace(LogPathTextBox.Text) && File.Exists(LogPathTextBox.Text))
             {
                 ApplyFileConstraints(LogPathTextBox.Text);
             }
 
-            // --- DIALOG BUTTON EVENTS ---
             btnBrowse.Click += (s, ev) =>
             {
                 OpenFileDialog ofd = new OpenFileDialog { Filter = "Log files (*.log;*.txt)|*.log;*.txt|All files (*.*)|*.*" };
@@ -774,11 +538,9 @@ namespace LOG_EZ
                     else doc = new XDocument(new XElement("SequenceRoot"));
                     if (doc.Root == null) doc.Add(new XElement("SequenceRoot"));
 
-                    // Find next available Sequence Number dynamically
                     int seqNum = 1;
                     while (doc.Root.Elements().Any(e => e.Name.LocalName == $"Sequence_Auto_EXTRACTED_SEQUENCE_{seqNum}")) seqNum++;
 
-                    // Format it perfectly so the UI reader parses "EXTRACTED SEQUENCE X" as the 3rd chunk!
                     string autoSeqName = $"Sequence_Auto_EXTRACTED_SEQUENCE_{seqNum}";
                     XElement newSequenceNode = new XElement(autoSeqName);
 
@@ -942,8 +704,6 @@ namespace LOG_EZ
                     if (headerText.StartsWith("S6F11") && childElement.Attribute("NAME") != null)
                     {
                         string nameVal = childElement.Attribute("NAME").Value;
-
-                        // SMART FIX: Only add "S6F11_" if it isn't already there!
                         headerText = nameVal.StartsWith("S6F11_") ? nameVal : $"S6F11_{nameVal}";
                     }
 
@@ -1256,14 +1016,12 @@ namespace LOG_EZ
 
                         string eventName = EventMapper.GetEventName(ceidVal);
 
-                        // REMOVED the S6F11_ prefix for the XML attribute
                         string attrName = string.IsNullOrEmpty(eventName) ? ceidVal : $"{ceidVal}_{eventName}";
 
                         node.Name = "S6F11";
                         node.SetAttributeValue("NAME", attrName);
                     }
                 }
-                // ... rest of the method stays the same
 
                 XElement existingNodeMatch = doc.Root.Element(currentSequenceTagName);
                 if (existingNodeMatch != null) existingNodeMatch.ReplaceWith(cleanUpdatedBranch);
@@ -1333,6 +1091,7 @@ namespace LOG_EZ
                 }
             }
         }
+
         // ==========================================
         // EXPORT REPORT ENGINE
         // ==========================================
@@ -1359,7 +1118,7 @@ namespace LOG_EZ
                         writer.WriteLine($"Generated on:,{DateTime.Now}");
                         writer.WriteLine($"Target Sequence:,{((ComboBoxItem)AnalysisSequenceComboBox.SelectedItem)?.Content.ToString().Replace(",", " ")}");
                         writer.WriteLine($"Overall Result:,{AnalysisSummaryText.Text}");
-                        writer.WriteLine(""); 
+                        writer.WriteLine("");
                         writer.WriteLine("STATUS,EVENT NAME,DATA_ID,CEID,REPORT_ID");
 
                         foreach (TreeViewItem rootNode in ExpectedSequenceTree.Items)
@@ -1367,14 +1126,11 @@ namespace LOG_EZ
                             var headerBlock = rootNode.Header as TextBlock;
                             string nodeText = headerBlock?.Text.Replace(",", " ") ?? "Unknown";
                             string colorHex = headerBlock?.Foreground.ToString() ?? "";
-                            
-                            // UPDATED: Smarter status check since both Missing and Out-Of-Order are Red
+
                             string status = "FATAL (MISSING)";
                             if (colorHex.Contains("98C379")) status = "MATCHED (PERFECT)";
                             else if (colorHex.Contains("E06C75"))
                             {
-                                // If it exists in the Actual Tree but is red, it's Out of Order.
-                                // If it doesn't exist in the Actual Tree at all, it's Missing.
                                 bool foundInActual = false;
                                 foreach (TreeViewItem actualNode in ActualSequenceTree.Items)
                                 {
@@ -1393,7 +1149,7 @@ namespace LOG_EZ
                             {
                                 dataId = ExtractTagValue(outerList.Items[0] as TreeViewItem);
                                 ceid = ExtractTagValue(outerList.Items[1] as TreeViewItem);
-                                
+
                                 if (outerList.Items.Count > 2 && outerList.Items[2] is TreeViewItem innerList)
                                 {
                                     repId = ExtractTagValue(innerList.Items[0] as TreeViewItem);
@@ -1410,92 +1166,6 @@ namespace LOG_EZ
                     MessageBox.Show($"Error saving report: {ex.Message}", "Export Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
-        }
-
-        // ==========================================
-        // EXPORT REPORT ENGINE
-        // ==========================================
-        //private void OnSaveReportClick(object sender, RoutedEventArgs e)
-        //{
-        //    // 1. Ensure there is actually data to export
-        //    if (ExpectedSequenceTree.Items.Count == 0)
-        //    {
-        //        MessageBox.Show("Please run a Log Analysis first before exporting a report.", "Export Failed", MessageBoxButton.OK, MessageBoxImage.Warning);
-        //        return;
-        //    }
-
-        //    // 2. Open a Save Dialog for CSV
-        //    SaveFileDialog saveFileDialog = new SaveFileDialog();
-        //    saveFileDialog.Filter = "CSV Excel File (*.csv)|*.csv|Text File (*.txt)|*.txt";
-        //    saveFileDialog.Title = "Export Analysis Report";
-        //    saveFileDialog.FileName = $"Sequence_Report_{DateTime.Now:MMdd_HHmm}.csv";
-
-        //    if (saveFileDialog.ShowDialog() == true)
-        //    {
-        //        try
-        //        {
-        //            using (StreamWriter writer = new StreamWriter(saveFileDialog.FileName))
-        //            {
-        //                // 3. Write Report Header
-        //                writer.WriteLine("LOG ANALYZER 4.0 - SEQUENCE REPORT");
-        //                writer.WriteLine($"Generated on:,{DateTime.Now}");
-        //                writer.WriteLine($"Target Sequence:,{((ComboBoxItem)AnalysisSequenceComboBox.SelectedItem)?.Content.ToString().Replace(",", " ")}");
-        //                writer.WriteLine($"Overall Result:,{AnalysisSummaryText.Text}");
-        //                writer.WriteLine(""); // Blank line for spacing
-
-        //                // 4. Write Data Columns
-        //                writer.WriteLine("STATUS,EVENT NAME,DATA_ID,CEID,REPORT_ID");
-
-        //                // 5. Loop through the Expected Tree and extract the results!
-        //                foreach (TreeViewItem rootNode in ExpectedSequenceTree.Items)
-        //                {
-        //                    var headerBlock = rootNode.Header as TextBlock;
-        //                    string nodeText = headerBlock?.Text.Replace(",", " ") ?? "Unknown";
-        //                    string colorHex = headerBlock?.Foreground.ToString() ?? "";
-
-        //                    // Determine status based on the color we assigned during analysis
-        //                    string status = "UNKNOWN";
-        //                    if (colorHex.Contains("98C379")) status = "MATCHED (PERFECT)";
-        //                    else if (colorHex.Contains("E5C07B")) status = "WARNING (OUT OF ORDER)";
-        //                    else if (colorHex.Contains("E06C75")) status = "FATAL (MISSING)";
-
-        //                    // Dig into the tree structure to grab the triplet data
-        //                    string dataId = "-", ceid = "-", repId = "-";
-        //                    if (rootNode.Items.Count > 0 && rootNode.Items[0] is TreeViewItem outerList)
-        //                    {
-        //                        dataId = ExtractTagValue(outerList.Items[0] as TreeViewItem);
-        //                        ceid = ExtractTagValue(outerList.Items[1] as TreeViewItem);
-
-        //                        if (outerList.Items.Count > 2 && outerList.Items[2] is TreeViewItem innerList)
-        //                        {
-        //                            repId = ExtractTagValue(innerList.Items[0] as TreeViewItem);
-        //                        }
-        //                    }
-
-        //                    // Write the row to the CSV
-        //                    writer.WriteLine($"{status},{nodeText},{dataId},{ceid},{repId}");
-        //                }
-        //            }
-        //            MessageBox.Show("Report exported successfully!\n\nYou can open this file in Excel.", "Export Complete", MessageBoxButton.OK, MessageBoxImage.Information);
-        //        }
-        //        catch (Exception ex)
-        //        {
-        //            MessageBox.Show($"Error saving report: {ex.Message}", "Export Error", MessageBoxButton.OK, MessageBoxImage.Error);
-        //        }
-        //    }
-        //}
-
-        // Helper method to safely extract the [1234] value from the TreeView UI
-        private string ExtractTagValue(TreeViewItem item)
-        {
-            if (item == null) return "-";
-            var panel = item.Header as StackPanel;
-            if (panel != null && panel.Children.Count > 1)
-            {
-                var textBlock = panel.Children[1] as TextBlock;
-                return textBlock?.Text.Replace("[", "").Replace("]", "").Trim() ?? "-";
-            }
-            return "-";
         }
     }
 }
