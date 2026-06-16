@@ -9,6 +9,7 @@
 	</PropertyGroup>
 	<ItemGroup>
 	  <None Remove="sdrlog logo.jpeg" />
+	  <None Remove="sdrlog logo_1.jpeg" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -17,5 +18,6 @@
 
 	<ItemGroup>
 	  <Resource Include="sdrlog logo.jpeg" />
+	  <Resource Include="sdrlog logo_1.jpeg" />
 	</ItemGroup>
 </Project>
