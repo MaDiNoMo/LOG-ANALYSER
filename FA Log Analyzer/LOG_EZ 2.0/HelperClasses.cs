@@ -7,7 +7,5 @@
     public string ReportID { get; set; } = "*";
     public int LineNumber { get; set; }
 
-    public int Lines { get; set; }
-
     public string GetSignature() => $"[Data:{DataID} | CEID:{CEID} | Rep:{ReportID}]";
 }
