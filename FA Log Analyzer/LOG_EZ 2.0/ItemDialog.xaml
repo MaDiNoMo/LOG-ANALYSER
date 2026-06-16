@@ -1,0 +1,29 @@
+﻿<Window x:Class="LOG_EZ.ItemDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Add / Edit Item" Height="200" Width="320" 
+        Background="#2E3440" WindowStartupLocation="CenterOwner" ResizeMode="NoResize">
+
+    <Grid Margin="15">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,15">
+            <TextBlock Text="Item Name " Foreground="#E5E9F0" FontWeight="Bold" Width="85" VerticalAlignment="Center"/>
+            <TextBox x:Name="NameBox" Width="180" Padding="4" Background="#242933" Foreground="#88C0D0" BorderBrush="#4C566A" FontFamily="Consolas" FontWeight="Bold"/>
+        </StackPanel>
+
+        <StackPanel Grid.Row="1" Orientation="Horizontal">
+            <TextBlock Text=" Item Value " Foreground="#E5E9F0" FontWeight="Bold" Width="85" VerticalAlignment="Center"/>
+            <TextBox x:Name="ValueBox" Width="180" Padding="4" Background="#242933" Foreground="#A3BE8C" BorderBrush="#4C566A" FontFamily="Consolas" FontWeight="Bold"/>
+        </StackPanel>
+
+        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Bottom">
+            <Button Content="OK" Click="Ok_Click" Width="70" Padding="5" Margin="0,0,10,0" Background="#4CAF50" Foreground="White" FontWeight="Bold" BorderThickness="0" Cursor="Hand"/>
+            <Button Content="Cancel" Click="Cancel_Click" Width="70" Padding="5" Background="#F44336" Foreground="White" FontWeight="Bold" BorderThickness="0" Cursor="Hand"/>
+        </StackPanel>
+    </Grid>
+</Window>

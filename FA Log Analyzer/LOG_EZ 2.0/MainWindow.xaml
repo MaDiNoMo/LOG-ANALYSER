@@ -1,0 +1,477 @@
+﻿<Window x:Class="LOG_EZ.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:LOG_EZ"
+        Title="LOG ANALYZER 4.0" Height="780" Width="1200" Background="#1E222A" Icon="/sdrlog logo.jpeg">
+
+    <Window.Resources>
+        <SolidColorBrush x:Key="AppBgBrush" Color="#1E222A"/>
+        <SolidColorBrush x:Key="PanelBgBrush" Color="#282C34"/>
+        <SolidColorBrush x:Key="PanelBorderBrush" Color="#3E4451"/>
+        <SolidColorBrush x:Key="ItemHoverBrush" Color="#2C313A"/>
+        <SolidColorBrush x:Key="TextMainBrush" Color="#ABB2BF"/>
+        <SolidColorBrush x:Key="TextHighlightBrush" Color="#FFFFFF"/>
+        <SolidColorBrush x:Key="AccentBlue" Color="#61AFEF"/>
+        <SolidColorBrush x:Key="AccentGreen" Color="#98C379"/>
+        <SolidColorBrush x:Key="AccentYellow" Color="#E5C07B"/>
+        <SolidColorBrush x:Key="AccentRed" Color="#E06C75"/>
+
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+        <local:HeaderToIconConverter x:Key="HeaderToIconConverter"/>
+
+        <Style TargetType="ListBoxItem">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ListBoxItem">
+                        <Border x:Name="ItemBorder" Background="Transparent" CornerRadius="4" Margin="2">
+                            <StackPanel Orientation="Horizontal">
+                                <Rectangle x:Name="Indicator" Width="4" Height="Auto" Margin="0,2,8,2" Fill="Transparent"/>
+                                <ContentPresenter VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="ItemBorder" Property="Background" Value="{StaticResource ItemHoverBrush}"/>
+                                <Setter TargetName="Indicator" Property="Fill" Value="{StaticResource AccentBlue}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{StaticResource TextMainBrush}"/>
+            <Setter Property="FontFamily" Value="Segoe UI"/>
+        </Style>
+
+        <Style TargetType="RadioButton">
+            <Setter Property="Foreground" Value="{StaticResource TextMainBrush}"/>
+            <Setter Property="FontFamily" Value="Segoe UI"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Margin" Value="0,0,15,0"/>
+        </Style>
+
+        <Style TargetType="Button">
+            <Setter Property="Padding" Value="12,6"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="6" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style TargetType="Border" x:Key="PremiumPanel">
+            <Setter Property="BorderBrush" Value="{StaticResource PanelBorderBrush}"/>
+            <Setter Property="Background" Value="{StaticResource PanelBgBrush}"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="15"/>
+        </Style>
+
+        <Style TargetType="TreeView">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Foreground" Value="{StaticResource TextHighlightBrush}"/>
+            <Setter Property="FontFamily" Value="Consolas"/>
+            <Setter Property="FontSize" Value="14"/>
+        </Style>
+
+        <Style TargetType="ListBox">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Foreground" Value="{StaticResource AccentBlue}"/>
+            <Setter Property="FontFamily" Value="Consolas"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Margin" Value="0,5,0,0"/>
+        </Style>
+
+        <Style TargetType="DataGrid">
+            <Setter Property="Background" Value="#181A1F"/>
+            <Setter Property="BorderBrush" Value="{StaticResource PanelBorderBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="RowBackground" Value="#1E222A"/>
+            <Setter Property="AlternatingRowBackground" Value="#282C34"/>
+            <Setter Property="Foreground" Value="{StaticResource TextMainBrush}"/>
+            <Setter Property="GridLinesVisibility" Value="Horizontal"/>
+            <Setter Property="HorizontalGridLinesBrush" Value="{StaticResource PanelBorderBrush}"/>
+            <Setter Property="HeadersVisibility" Value="Column"/>
+            <Setter Property="FontFamily" Value="Consolas"/>
+            <Setter Property="FontSize" Value="13"/>
+        </Style>
+
+        <Style TargetType="DataGridColumnHeader">
+            <Setter Property="Background" Value="#282C34"/>
+            <Setter Property="Foreground" Value="{StaticResource AccentBlue}"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Padding" Value="10,8"/>
+            <Setter Property="BorderThickness" Value="0,0,1,1"/>
+            <Setter Property="BorderBrush" Value="{StaticResource PanelBorderBrush}"/>
+        </Style>
+
+        <Style TargetType="DataGridCell">
+            <Setter Property="Padding" Value="10,5"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Style.Triggers>
+                <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="Background" Value="{StaticResource ItemHoverBrush}"/>
+                    <Setter Property="Foreground" Value="{StaticResource AccentGreen}"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style TargetType="TreeViewItem">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="{StaticResource TextHighlightBrush}"/>
+            <Setter Property="Padding" Value="4,6"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TreeViewItem">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition MinWidth="22" Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+                            <Rectangle x:Name="HorzLine" Margin="11,0,0,0" HorizontalAlignment="Left" VerticalAlignment="Center" Width="11" Height="1" Stroke="#3E4451" StrokeDashArray="2 2"/>
+                            <Rectangle x:Name="VertLine" Grid.RowSpan="2" Margin="11,0,0,0" HorizontalAlignment="Left" Width="1" Stroke="#3E4451" StrokeDashArray="2 2"/>
+                            <ToggleButton x:Name="Expander" ClickMode="Press" IsChecked="{Binding IsExpanded, RelativeSource={RelativeSource TemplatedParent}}">
+                                <ToggleButton.Style>
+                                    <Style TargetType="ToggleButton">
+                                        <Setter Property="Focusable" Value="false"/>
+                                        <Setter Property="Width" Value="18"/>
+                                        <Setter Property="Height" Value="18"/>
+                                        <Setter Property="Template">
+                                            <Setter.Value>
+                                                <ControlTemplate TargetType="ToggleButton">
+                                                    <Border Background="{StaticResource AppBgBrush}" BorderBrush="{StaticResource PanelBorderBrush}" BorderThickness="1" CornerRadius="3" Width="14" Height="14">
+                                                        <Path x:Name="Sign" Data="M3,6 L9,6 M6,3 L6,9" Stroke="{StaticResource AccentYellow}" StrokeThickness="1.5" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                    </Border>
+                                                    <ControlTemplate.Triggers>
+                                                        <Trigger Property="IsChecked" Value="True">
+                                                            <Setter TargetName="Sign" Property="Data" Value="M3,6 L9,6"/>
+                                                        </Trigger>
+                                                    </ControlTemplate.Triggers>
+                                                </ControlTemplate>
+                                            </Setter.Value>
+                                        </Setter>
+                                    </Style>
+                                </ToggleButton.Style>
+                            </ToggleButton>
+                            <Border x:Name="Bd" Grid.Column="1" Grid.ColumnSpan="2" Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}" CornerRadius="4">
+                                <StackPanel Orientation="Horizontal">
+                                    <Path Width="15" Height="15" Margin="2,0,10,0" Stretch="Fill" Fill="{StaticResource AccentYellow}" VerticalAlignment="Center"
+                                          Data="M12,10A2,2 0 1,0 12,14A2,2 0 1,0 12,10Z"/>
+                                    <ContentPresenter x:Name="PART_Header" ContentSource="Header" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Border>
+                            <ItemsPresenter x:Name="ItemsHost" Grid.Column="1" Grid.ColumnSpan="2" Grid.Row="1" Margin="12,0,0,0"/>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="HasItems" Value="false">
+                                <Setter TargetName="Expander" Property="Visibility" Value="Hidden"/>
+                            </Trigger>
+                            <Trigger Property="IsExpanded" Value="false">
+                                <Setter TargetName="ItemsHost" Property="Visibility" Value="Collapsed"/>
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="true">
+                                <Setter TargetName="Bd" Property="Background" Value="{StaticResource ItemHoverBrush}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <Grid Margin="15">
+        <TabControl Background="Transparent" BorderThickness="0" Foreground="{StaticResource TextHighlightBrush}">
+
+            <TabItem Header=" SEQUENCE SIMULATION"  Padding="15,8" FontSize="13"  FontWeight="Bold">
+                <Grid Margin="0,15,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="1*"/>
+                        <ColumnDefinition Width="1.6*"/>
+                        <ColumnDefinition Width="1*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <Border Style="{StaticResource PremiumPanel}" Grid.Column="0" Margin="0,0,8,0" BorderThickness="2,2,2,2">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <TextBlock Grid.Row="0" Text="SEQUENCES" FontSize="15" Foreground="{StaticResource AccentYellow}" FontWeight="Heavy" HorizontalAlignment="Center"/>
+                            <Separator Grid.Row="1" Background="{StaticResource PanelBorderBrush}" Margin="0,10,0,10" Height="1"/>
+                            <ListBox x:Name="SequenceListBox" Grid.Row="2" MouseDoubleClick="SequenceListBox_MouseDoubleClick" Background="#FF262525" Margin="0,0,0,15"/>
+
+                            <UniformGrid Grid.Row="3" Columns="2" Height="36">
+                                <Button Content="Auto-Extract" Click="BtnAutoExtract_Click" Margin="0,0,4,0" Background="#CCE3E8ED" Foreground="#1E222A"/>
+                                <Button Content="View XML" Click="BtnViewXml_Click" Margin="2,0,0,0" Background="{StaticResource PanelBorderBrush}" Foreground="{StaticResource AccentYellow}"/>
+                            </UniformGrid>
+                        </Grid>
+                    </Border>
+
+                    <Border Style="{StaticResource PremiumPanel}" Grid.Column="1" Margin="8,0,8,0" BorderThickness="2,2,2,2">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <TextBlock Grid.Row="0" Text=" SEQUENCE EDITOR" FontSize="15" Foreground="{StaticResource AccentBlue}" FontWeight="Heavy" HorizontalAlignment="Center"/>
+                            <Separator Grid.Row="1" Background="{StaticResource PanelBorderBrush}" Margin="0,10,0,10" Height="1"/>
+                            <TreeView x:Name="TreeView1" Grid.Row="2" Margin="0,0,0,15" Background="#FF262525"/>
+
+                            <UniformGrid Grid.Row="3" Columns="4" Height="36">
+                                <Button Content="New" Click="BtnNew_Click" Margin="0,0,4,0" Background="{StaticResource AccentBlue}" Foreground="#1E222A"/>
+                                <Button Content="Save" Click="BtnSave_Click" Margin="2,0,4,0" Background="{StaticResource AccentGreen}" Foreground="#1E222A"/>
+                                <Button Content="Delete" Click="BtnDelete_Click" Margin="2,0,4,0" Background="{StaticResource AccentRed}" Foreground="#1E222A"/>
+                                <Button Content="Clear" Click="BtnClear_Click" Margin="2,0,0,0" Background="#FF565A61" Foreground="#FFFFFF"/>
+                            </UniformGrid>
+                        </Grid>
+                    </Border>
+
+                    <Border Style="{StaticResource PremiumPanel}" Grid.Column="2" Margin="8,0,0,0" BorderThickness="2,2,2,2">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+                            <TextBlock Grid.Row="0" Text="SECS STREAMS" FontSize="15" HorizontalAlignment="Center" Foreground="{StaticResource AccentGreen}" FontWeight="Heavy"/>
+                            <Separator Grid.Row="1" Background="{StaticResource PanelBorderBrush}" Margin="0,10,0,10" Height="1"/>
+                            <TreeView x:Name="TreeView2" Grid.Row="2" SelectedItemChanged="TreeView2_SelectedItemChanged" Background="#FF262525"/>
+                        </Grid>
+                    </Border>
+                </Grid>
+            </TabItem>
+
+            <TabItem Header=" ANALYSIS TAB " Padding="15,8" FontSize="13" FontWeight="Bold">
+                <Grid Margin="0,11,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="350"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <Border Style="{StaticResource PremiumPanel}" Grid.Column="0" Margin="0,0,8,0">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                            <TextBlock Grid.Row="0" Text="1. UPLOAD SDR LOG" FontSize="12" Foreground="{StaticResource AccentBlue}" FontWeight="Heavy"/>
+                            <Separator Grid.Row="1" Background="{StaticResource PanelBorderBrush}" Margin="0,10,0,15" Height="1"/>
+                            <Grid Grid.Row="2" Margin="0,0,0,15">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBox x:Name="LogPathTextBox" Grid.Column="0" IsReadOnly="True" Height="34" VerticalContentAlignment="Center" Background="#1E222A" BorderBrush="{StaticResource PanelBorderBrush}" BorderThickness="1" Foreground="{StaticResource TextMainBrush}"/>
+                                <Button Grid.Column="1" Content="BROWSE" Click="OnUploadLogClick" Width="80" Margin="5,0,0,0" Background="{StaticResource PanelBorderBrush}" Foreground="{StaticResource TextHighlightBrush}"/>
+                            </Grid>
+
+                            <TextBlock Grid.Row="3" Text="2. SELECT TARGET SEQUENCE" FontSize="12" Foreground="{StaticResource AccentYellow}" FontWeight="Heavy"/>
+                            <Separator Grid.Row="4" Background="{StaticResource PanelBorderBrush}" Margin="0,10,0,15" Height="1"/>
+                            <ComboBox x:Name="AnalysisSequenceComboBox" Grid.Row="5" Height="34" Margin="0,0,0,15" FontFamily="Consolas" FontSize="14" Background="#1E222A" Foreground="{StaticResource TextMainBrush}" BorderBrush="{StaticResource PanelBorderBrush}"/>
+
+                         
+                            
+                            <TextBlock Grid.Row="6" Text="3.OPTIONS " FontSize="12" Foreground="{StaticResource AccentGreen}" FontWeight="Heavy" Margin="0,10,0,0"/>
+                            
+                            <Separator Grid.Row="7" Background="{StaticResource PanelBorderBrush}" Margin="0,10,0,10" Height="1"/>
+                            <StackPanel Grid.Row="8" Orientation="Horizontal" Margin="0,0,0,10">
+                                <RadioButton x:Name="Tab2ShowAllRadio" Content="SHOW ALL EVENTS" IsChecked="True" Checked="Tab2TimeToggle_Checked"/>
+                                <RadioButton x:Name="Tab2FilterRadio" Content="FILTER BY TIME" Checked="Tab2TimeToggle_Checked"/>
+                            </StackPanel>
+
+                            <Grid x:Name="Tab2TimeGrid" Grid.Row="9" Margin="0,0,0,20" Visibility="Collapsed">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="80"/>
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+
+                                <TextBlock Grid.Row="0" Grid.Column="0" Text="START:" FontSize="11" Foreground="{StaticResource TextMainBrush}" FontWeight="Heavy" VerticalAlignment="Center" Margin="0,0,10,10"/>
+                                <DatePicker x:Name="Tab2StartDate" Grid.Row="0" Grid.Column="1" Height="30" Margin="0,0,10,10"/>
+                                <TextBox x:Name="Tab2StartTime" Grid.Row="0" Grid.Column="2" Height="30" VerticalContentAlignment="Center" Background="#1E222A" BorderBrush="{StaticResource PanelBorderBrush}" BorderThickness="1" Foreground="{StaticResource TextMainBrush}" Margin="0,0,0,10" Padding="5,0" ToolTip="HH:mm:ss (e.g. 16:53:00)"/>
+
+                                <TextBlock Grid.Row="1" Grid.Column="0" Text="END:" FontSize="11" Foreground="{StaticResource TextMainBrush}" FontWeight="Heavy" VerticalAlignment="Center"/>
+                                <DatePicker x:Name="Tab2EndDate" Grid.Row="1" Grid.Column="1" Height="30" Margin="0,0,10,0"/>
+                                <TextBox x:Name="Tab2EndTime" Grid.Row="1" Grid.Column="2" Height="30" VerticalContentAlignment="Center" Background="#1E222A" BorderBrush="{StaticResource PanelBorderBrush}" BorderThickness="1" Foreground="{StaticResource TextMainBrush}" Padding="5,0" ToolTip="HH:mm:ss (e.g. 16:55:00)"/>
+                            </Grid>
+
+                            <Border Grid.Row="10" />
+                            <Button Grid.Row="11" Content="RUN" Click="OnAnalyseRunClick" Height="42" Background="{StaticResource AccentGreen}" Foreground="#1E222A" FontSize="14" Margin="0,0,0,10"/>
+                            
+                            <Button Grid.Row="12" Content="EXPORT REPORT" Click="OnSaveReportClick" Height="42" Background="{StaticResource PanelBorderBrush}" Foreground="{StaticResource TextHighlightBrush}" FontSize="14"/>
+
+                        </Grid>
+                    </Border>
+
+                    <Border Style="{StaticResource PremiumPanel}" Grid.Column="1" Margin="30,0,0,0">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+                            <TextBlock Grid.Row="0" Text=" OUTPUT CONSOLE" FontSize="12" Foreground="{StaticResource AccentRed}" FontWeight="Heavy"/>
+                            <Separator Grid.Row="1" Background="{StaticResource PanelBorderBrush}" Margin="0,10,0,10" Height="1"/>
+                            <Border Grid.Row="2" Background="#181A1F" BorderBrush="{StaticResource PanelBorderBrush}" BorderThickness="1" CornerRadius="4" Padding="15">
+                                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                    <TextBlock x:Name="ConsoleOutput" FontFamily="Consolas" FontSize="14" Foreground="{StaticResource TextMainBrush}" TextWrapping="Wrap" LineHeight="22">
+                                        <Run Foreground="#61AFEF" Text="[SYSTEM]"/> Log Analyzer Initialized...
+                                        <LineBreak/>
+                                        <Run Foreground="#98C379" Text="[STATUS]"/> Waiting for SDR Log file and Sequence selection.
+                                    </TextBlock>
+                                </ScrollViewer>
+                            </Border>
+                        </Grid>
+                    </Border>
+                </Grid>
+            </TabItem>
+
+            <TabItem Header=" LOG EXPLORER " Padding="15,8" FontSize="13" FontWeight="Bold">
+                <Grid Margin="0,11,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="349"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <Border Style="{StaticResource PremiumPanel}" Grid.Column="0" Margin="0,0,8,0">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                            <TextBlock Grid.Row="0" Text=" SEARCH CRITERIA" FontSize="12" Foreground="{StaticResource AccentBlue}" FontWeight="Heavy"/>
+                            <Separator Grid.Row="1" Background="{StaticResource PanelBorderBrush}" Margin="0,10,0,15" Height="1"/>
+
+                            <TextBlock Grid.Row="2" Text="EVENT TYPE:" FontSize="11" Foreground="{StaticResource TextMainBrush}" FontWeight="Heavy" Margin="0,0,0,5"/>
+                            <ComboBox x:Name="SearchTypeComboBox" Grid.Row="3" Height="34" Margin="0,0,0,15" Background="#1E222A" Foreground="{StaticResource TextMainBrush}" BorderBrush="{StaticResource PanelBorderBrush}">
+                                <ComboBoxItem Content="ANY EVENT" IsSelected="True"/>
+                                <ComboBoxItem Content="DATA ID"/>
+                                <ComboBoxItem Content="CEID"/>
+                                <ComboBoxItem Content="REPORT ID"/>
+                            </ComboBox>
+
+                            <TextBlock Grid.Row="4" Text="SELECT VALUE:" FontSize="11" Foreground="{StaticResource TextMainBrush}" FontWeight="Heavy" Margin="0,0,0,5"/>
+                            <TextBox x:Name="SearchValueTextBox" Grid.Row="5" Height="34" VerticalContentAlignment="Center" Background="#1E222A" BorderBrush="{StaticResource PanelBorderBrush}" BorderThickness="1" Foreground="{StaticResource TextHighlightBrush}" Margin="0,0,0,25" Padding="5,0"/>
+
+                            <TextBlock Grid.Row="6" Text="OPTIONS" FontSize="12" Foreground="{StaticResource AccentGreen}" FontWeight="Heavy"/>
+                            <Separator Grid.Row="7" Background="{StaticResource PanelBorderBrush}" Margin="0,10,0,10" Height="1"/>
+                            <StackPanel Grid.Row="8" Orientation="Horizontal" Margin="0,0,0,10">
+                                <RadioButton x:Name="Tab3ShowAllRadio" Content="SHOW ALL EVENTS" IsChecked="True" Checked="Tab3TimeToggle_Checked"/>
+                                <RadioButton x:Name="Tab3FilterRadio" Content="FILTER BY TIME" Checked="Tab3TimeToggle_Checked"/>
+                            </StackPanel>
+
+                            <Grid x:Name="Tab3TimeGrid" Grid.Row="9" Margin="0,0,0,20" IsEnabled="False">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="80"/>
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+
+                                <TextBlock Grid.Row="0" Grid.Column="0" Text="START:" FontSize="11" Foreground="{StaticResource TextMainBrush}" FontWeight="Heavy" VerticalAlignment="Center" Margin="0,0,10,10"/>
+                                <DatePicker x:Name="Tab3StartDate" Grid.Row="0" Grid.Column="1" Height="30" Margin="0,0,10,10"/>
+                                <TextBox x:Name="Tab3StartTime" Grid.Row="0" Grid.Column="2" Height="30" VerticalContentAlignment="Center" Background="#1E222A" BorderBrush="{StaticResource PanelBorderBrush}" BorderThickness="1" Foreground="{StaticResource TextMainBrush}" Margin="0,0,0,10" Padding="5,0" ToolTip="HH:mm:ss"/>
+
+                                <TextBlock Grid.Row="1" Grid.Column="0" Text="END:" FontSize="11" Foreground="{StaticResource TextMainBrush}" FontWeight="Heavy" VerticalAlignment="Center"/>
+                                <DatePicker x:Name="Tab3EndDate" Grid.Row="1" Grid.Column="1" Height="30" Margin="0,0,10,0"/>
+                                <TextBox x:Name="Tab3EndTime" Grid.Row="1" Grid.Column="2" Height="30" VerticalContentAlignment="Center" Background="#1E222A" BorderBrush="{StaticResource PanelBorderBrush}" BorderThickness="1" Foreground="{StaticResource TextMainBrush}" Padding="5,0" ToolTip="HH:mm:ss"/>
+                            </Grid>
+
+                            <Border Grid.Row="10" >
+                               
+                                <!--<Button Content="Button" Margin="1037,-404,-811,638" Click=" BtnShow_Crop"/>-->
+                                  
+                            </Border>
+                            <Button Grid.Row="11" Content="SEARCH" Click="OnSearchLogsClick" Height="42" Background="{StaticResource AccentYellow}" Foreground="#1E222A" FontSize="14"/>
+                        </Grid>
+                    </Border>
+
+                    <Border Style="{StaticResource PremiumPanel}" Grid.Column="1" Margin="8,0,0,0">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                            <Grid Grid.Row="0">
+                                <TextBlock Text="SEARCH RESULTS" FontSize="12" Foreground="{StaticResource AccentYellow}" FontWeight="Heavy" VerticalAlignment="Center"/>
+                                <ToggleButton x:Name="ViewModeToggle" Content="SHOW ALL DATA" Click="OnToggleViewClick" HorizontalAlignment="Right" Background="{StaticResource PanelBorderBrush}" Foreground="{StaticResource AccentYellow}" FontWeight="Bold" Padding="10,2"/>
+                            </Grid>
+
+                            <Separator Grid.Row="1" Background="{StaticResource PanelBorderBrush}" Margin="0,10,0,10" Height="1"/>
+
+                            <DataGrid x:Name="SearchResultsGrid" Grid.Row="2" AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True">
+                                <DataGrid.Columns>
+                                    <!--<DataGridTextColumn Header="Line #" Binding="{Binding LineNumber}" Width="80"/>-->
+                                    <!--<DataGridTextColumn Header="DATE" Binding="{Binding Timestamp}" Width="180"/>-->
+                                    <DataGridTextColumn Header="SDR Msg" Binding="{Binding SdrMessage}" Width="100"/>
+                                    <DataGridTextColumn Header="Message" Binding="{Binding Protocol}" Width="80"/>
+                                    <DataGridTextColumn Header="W" Binding="{Binding WaitBit}" Width="30"/>
+                                    <DataGridTextColumn Header="Date" Binding="{Binding LogDate}" Width="90"/>
+                                    <DataGridTextColumn Header="Time" Binding="{Binding LogTime}" Width="90"/>
+                                    <DataGridTextColumn Header="Data ID" Binding="{Binding DataID}" Width="70"/>
+                                    <DataGridTextColumn Header="CEID" Binding="{Binding CEID}" Width="70"/>
+                                    <DataGridTextColumn Header="Report ID" Binding="{Binding ReportID}" Width="*"/>
+                                </DataGrid.Columns>
+                            </DataGrid>
+
+                            <TextBlock x:Name="ExploreStatsText" Grid.Row="3" Text="Found: 0 events" Foreground="{StaticResource AccentBlue}" FontWeight="Bold" Margin="0,10,0,0"/>
+                        </Grid>
+
+                    </Border>
+                </Grid>
+            </TabItem>
+        </TabControl>
+    </Grid>
+</Window>
