@@ -1,15 +1,16 @@
 ﻿#nullable disable
+using Microsoft.Win32;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Collections.Generic;
+using System.Runtime.InteropServices;
+using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
 using System.Windows.Input;
 using System.Xml.Linq;
-using Microsoft.Win32;
-using System.Text.RegularExpressions;
-using System.Windows.Data;
 
 namespace LOG_EZ
 {
@@ -19,7 +20,7 @@ namespace LOG_EZ
         private bool showAllData = false;
         
         // Dictionary to hold EVENTS.txt mappings
-        private Dictionary<string, string> ceidEventMap = new Dictionary<string, string>();
+        //private Dictionary<string, string> ceidEventMap = new Dictionary<string, string>();
 
         public MainWindow()
         {
@@ -27,7 +28,7 @@ namespace LOG_EZ
             if (TreeView1 != null) TreeView1.ContextMenu = null;
 
             // Load EVENTS.txt silently from the hardcoded directory!
-            LoadEventMapping(@"C:\Users\ArJuN\OneDrive\Documents\project phase 1\EVENTS.txt");
+            EventMapper.LoadEventMapping(@"C:\Users\ArJuN\OneDrive\Documents\project phase 1\EVENTS.txt");
 
             InitializeSecsPalette();
             InitializeMockDatabase();
@@ -35,54 +36,42 @@ namespace LOG_EZ
         // ==========================================t
         // EVENTS.TXT DICTIONARY PARSER for tab 2
         // ==========================================
-        private void LoadEventMapping(string eventFilePath)//for event file browse
-        {
-            ceidEventMap.Clear();
-            try
-            {
-                if (File.Exists(eventFilePath))
-                {
-                    foreach (string line in File.ReadLines(eventFilePath))
-                    {
-                        var parts = line.Split(new[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries);
-                        if (parts.Length >= 2)
-                        {
-                            ceidEventMap[parts[0].Trim()] = parts[1].Trim();
-                        }
-                    }
-                }
-            }
-            catch { MessageBox.Show("Failed to parse EVENTS.txt file."); }
-        }
+        //private void LoadEventMapping(string eventFilePath)//for event file browse
+        //{
+        //    ceidEventMap.Clear();
+        //    try
+        //    {
+        //        if (File.Exists(eventFilePath))
+        //        {
+        //            foreach (string line in File.ReadLines(eventFilePath))
+        //            {
+        //                var parts = line.Split(new[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries);
+        //                if (parts.Length >= 2)
+        //                {
+        //                    ceidEventMap[parts[0].Trim()] = parts[1].Trim();
+        //                }
+        //            }
+        //        }
+        //    }
+        //    catch { MessageBox.Show("Failed to parse EVENTS.txt file."); }
+        //}
 
-        private string GetEventName(string ceid)
-        {
-            if (ceidEventMap.TryGetValue(ceid, out string name)) return name;
-            return ""; // Returns clean empty string if no match is found
-        }
+        //private string GetEventName(string ceid)
+        //{
+        //    if (ceidEventMap.TryGetValue(ceid, out string name)) return name;
+        //    return ""; // Returns clean empty string if no match is found
+        //}
 
         // ==========================================
         // DATA STRUCTURE & CONVERTER
         // ==========================================
-        public class LogEvent
-        {
-            public string LogDate { get; set; } = "";
-            public string LogTime { get; set; } = "";
-            public string Timestamp { get; set; } = "";
-            public string SdrMessage { get; set; } = "";
-            public string Protocol { get; set; } = "";
-            public string WaitBit { get; set; } = "";
-            public string DataID { get; set; } = "-";
-            public string CEID { get; set; } = "-";
-            public string ReportID { get; set; } = "-";
-            public int LineNumber { get; set; }
-        }
+        
 
-        public class HeaderToIconConverter : IValueConverter
-        {
-            public object Convert(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture) => null;
-            public object ConvertBack(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture) => throw new NotImplementedException();
-        }
+        //public class HeaderToIconConverter : IValueConverter
+        //{
+        //    public object Convert(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture) => null;
+        //    public object ConvertBack(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture) => throw new NotImplementedException();
+        //}
 
         // ==========================================
         // UI TOGGLE HANDLERS & HELPERS
@@ -123,61 +112,61 @@ namespace LOG_EZ
         // ==========================================
         // CORE PARSING ENGINE
         // ==========================================
-        private List<LogEvent> ParseLog(string path, bool useFilter, DateTime start, DateTime end)
-        {
-            var list = new List<LogEvent>();
-            var regexSF = new Regex(@"(S\d+F\d+)\s*W=([01])");
-            var regexApp = new Regex(@"\)\s*(Sdr[a-zA-Z]+)");
+        //private List<LogEvent> ParseLog(string path, bool useFilter, DateTime start, DateTime end)
+        //{
+        //    var list = new List<LogEvent>();
+        //    var regexSF = new Regex(@"(S\d+F\d+)\s*W=([01])");
+        //    var regexApp = new Regex(@"\)\s*(Sdr[a-zA-Z]+)");
 
-            string lastTs = "UNKNOWN", lastApp = "Unknown";
-            bool capS6 = false; int intCount = 0;
-            string curD = "-", curC = "-", curR = "-";
-            int currentLine = 0;
+        //    string lastTs = "UNKNOWN", lastApp = "Unknown";
+        //    bool capS6 = false; int intCount = 0;
+        //    string curD = "-", curC = "-", curR = "-";
+        //    int currentLine = 0;
 
-            foreach (string line in File.ReadLines(path))
-            {
-                currentLine++;
-                if (line.Length >= 19 && DateTime.TryParse(line.Substring(0, 19), out _))
-                {
-                    lastTs = line.Substring(0, 19);
-                    var appMatch = regexApp.Match(line);
-                    if (appMatch.Success) lastApp = appMatch.Groups[1].Value;
-                }
+        //    foreach (string line in File.ReadLines(path))
+        //    {
+        //        currentLine++;
+        //        if (line.Length >= 19 && DateTime.TryParse(line.Substring(0, 19), out _))
+        //        {
+        //            lastTs = line.Substring(0, 19);
+        //            var appMatch = regexApp.Match(line);
+        //            if (appMatch.Success) lastApp = appMatch.Groups[1].Value;
+        //        }
 
-                var sfMatch = regexSF.Match(line);
-                if (sfMatch.Success)
-                {
-                    string sf = sfMatch.Groups[1].Value;
-                    string w = sfMatch.Groups[2].Value;
+        //        var sfMatch = regexSF.Match(line);
+        //        if (sfMatch.Success)
+        //        {
+        //            string sf = sfMatch.Groups[1].Value;
+        //            string w = sfMatch.Groups[2].Value;
 
-                    if (sf == "S6F11") { capS6 = true; intCount = 0; curD = "-"; curC = "-"; curR = "-"; }
-                    else
-                    {
-                        if (!useFilter || (DateTime.TryParse(lastTs, out DateTime t) && t >= start && t <= end))
-                            list.Add(new LogEvent { LogDate = lastTs.Substring(0, 10), LogTime = lastTs.Substring(11), Timestamp = lastTs, SdrMessage = lastApp, Protocol = sf, WaitBit = w, LineNumber = currentLine });
-                        capS6 = false;
-                    }
-                }
-                else if (capS6 && (line.Contains("<U") || line.Contains("<I")))
-                {
-                    intCount++;
-                    var parts = line.Split(new char[] { '<', ' ', '>' }, StringSplitOptions.RemoveEmptyEntries);
-                    if (parts.Length >= 2)
-                    {
-                        if (intCount == 1) curD = parts[1].Trim();
-                        else if (intCount == 2) curC = parts[1].Trim();
-                        else if (intCount == 3)
-                        {
-                            curR = parts[1].Trim();
-                            if (!useFilter || (DateTime.TryParse(lastTs, out DateTime t) && t >= start && t <= end))
-                                list.Add(new LogEvent { LogDate = lastTs.Substring(0, 10), LogTime = lastTs.Substring(11), Timestamp = lastTs, SdrMessage = lastApp, Protocol = "S6F11", WaitBit = "1", DataID = curD, CEID = curC, ReportID = curR, LineNumber = currentLine });
-                            capS6 = false;
-                        }
-                    }
-                }
-            }
-            return list;
-        }
+        //            if (sf == "S6F11") { capS6 = true; intCount = 0; curD = "-"; curC = "-"; curR = "-"; }
+        //            else
+        //            {
+        //                if (!useFilter || (DateTime.TryParse(lastTs, out DateTime t) && t >= start && t <= end))
+        //                    list.Add(new LogEvent { LogDate = lastTs.Substring(0, 10), LogTime = lastTs.Substring(11), Timestamp = lastTs, SdrMessage = lastApp, Protocol = sf, WaitBit = w, LineNumber = currentLine });
+        //                capS6 = false;
+        //            }
+        //        }
+        //        else if (capS6 && (line.Contains("<U") || line.Contains("<I")))
+        //        {
+        //            intCount++;
+        //            var parts = line.Split(new char[] { '<', ' ', '>' }, StringSplitOptions.RemoveEmptyEntries);
+        //            if (parts.Length >= 2)
+        //            {
+        //                if (intCount == 1) curD = parts[1].Trim();
+        //                else if (intCount == 2) curC = parts[1].Trim();
+        //                else if (intCount == 3)
+        //                {
+        //                    curR = parts[1].Trim();
+        //                    if (!useFilter || (DateTime.TryParse(lastTs, out DateTime t) && t >= start && t <= end))
+        //                        list.Add(new LogEvent { LogDate = lastTs.Substring(0, 10), LogTime = lastTs.Substring(11), Timestamp = lastTs, SdrMessage = lastApp, Protocol = "S6F11", WaitBit = "1", DataID = curD, CEID = curC, ReportID = curR, LineNumber = currentLine });
+        //                    capS6 = false;
+        //                }
+        //            }
+        //        }
+        //    }
+        //    return list;
+        //}
 
         // ==========================================
         // TAB 2: ANALYSIS ENGINE (DUAL TREES)
@@ -347,6 +336,139 @@ namespace LOG_EZ
         // ==========================================
         // TAB 2: ANALYSIS ENGINE (STRICT MODE)
         // ==========================================
+        //private void OnAnalyseRunClick(object sender, RoutedEventArgs e)
+        //{
+        //    if (string.IsNullOrWhiteSpace(LogPathTextBox.Text) || AnalysisSequenceComboBox.SelectedItem == null)
+        //    {
+        //        MessageBox.Show("Please upload a log file and select a sequence first!", "Ready to Run", MessageBoxButton.OK, MessageBoxImage.Information);
+        //        return;
+        //    }
+
+        //    ActualSequenceTree.Items.Clear();
+        //    ExpectedSequenceTree.Items.Clear();
+        //    AnalysisSummaryText.Text = "Analyzing SDR Log...";
+        //    AnalysisSummaryText.Foreground = new System.Windows.Media.SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#61AFEF"));
+
+        //    bool applyTimeFilter = Tab2FilterRadio.IsChecked == true;
+        //    DateTime start = DateTime.MinValue, end = DateTime.MaxValue;
+        //    if (applyTimeFilter)
+        //    {
+        //        start = CombineDateTime(Tab2StartDate.SelectedDate, Tab2StartTime.Text, false);
+        //        end = CombineDateTime(Tab2EndDate.SelectedDate, Tab2EndTime.Text, true);
+        //    }
+
+        //    string seqTag = ((ComboBoxItem)AnalysisSequenceComboBox.SelectedItem).Tag.ToString();
+        //    XDocument seqDoc = XDocument.Load(filePath);
+        //    var expectedEvents = new List<LogEvent>();
+
+        //    foreach (var s6f11Node in seqDoc.Root?.Element(seqTag)?.Elements("S6F11") ?? Enumerable.Empty<XElement>())
+        //    {
+        //        expectedEvents.Add(new LogEvent
+        //        {
+        //            DataID = s6f11Node.Descendants("Data_ID").FirstOrDefault()?.Value ?? "*",
+        //            CEID = s6f11Node.Descendants("CEID").FirstOrDefault()?.Value ?? "*",
+        //            ReportID = s6f11Node.Descendants("Report_ID").FirstOrDefault()?.Value ?? "*"
+        //        });
+        //    }
+
+        //    if (expectedEvents.Count == 0)
+        //    {
+        //        AnalysisSummaryText.Text = "ERROR: Sequence contains no S6F11 data!";
+        //        AnalysisSummaryText.Foreground = new System.Windows.Media.SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#E06C75"));
+        //        return;
+        //    }
+
+        //    var actualEvents = ParseLog(LogPathTextBox.Text, applyTimeFilter, start, end);
+
+        //    int highestIndexReached = -1;
+        //    int perfectMatches = 0;
+
+        //    var actualStatuses = new Dictionary<LogEvent, string>();
+        //    var expectedStatuses = new Dictionary<LogEvent, string>();
+
+        //    // STRICT TRACKER: Keep track of every event we actually "use"
+        //    var matchedActualEvents = new HashSet<LogEvent>();
+
+        //    foreach (var a in actualEvents.Where(x => x.Protocol == "S6F11")) actualStatuses[a] = "#ABB2BF";
+
+        //    for (int i = 0; i < expectedEvents.Count; i++)
+        //    {
+        //        var target = expectedEvents[i];
+
+        //        bool IsMatch(LogEvent ev) =>
+        //            ev.Protocol == "S6F11" &&
+        //            !matchedActualEvents.Contains(ev) && // Prevents matching the same log event twice!
+        //            (target.DataID == "*" || target.DataID == ev.DataID) &&
+        //            (target.CEID == "*" || target.CEID == ev.CEID) &&
+        //            (target.ReportID == "*" || target.ReportID == ev.ReportID);
+
+        //        int foundIndex = actualEvents.FindIndex(Math.Max(0, highestIndexReached), IsMatch);
+
+        //        if (foundIndex != -1)
+        //        {
+        //            var ev = actualEvents[foundIndex];
+        //            actualStatuses[ev] = "#98C379";
+        //            expectedStatuses[target] = "#98C379";
+        //            highestIndexReached = foundIndex;
+        //            perfectMatches++;
+        //            matchedActualEvents.Add(ev);
+        //        }
+        //        else
+        //        {
+        //            int previousIndex = actualEvents.FindIndex(0, IsMatch);
+        //            if (previousIndex != -1 && previousIndex < highestIndexReached)
+        //            {
+        //                var ev = actualEvents[previousIndex];
+        //                actualStatuses[ev] = "#E06C75"; // RED: Event exists but is completely out of order!
+        //                expectedStatuses[target] = "#E06C75";
+        //                matchedActualEvents.Add(ev);
+        //            }
+        //            else
+        //            {
+        //                expectedStatuses[target] = "#E06C75"; // RED: Completely missing from log!
+        //            }
+        //        }
+        //    }
+
+        //    // STRICT ENFORCEMENT: Flag any unexpected/extra messages in the log!
+        //    int extraMessages = 0;
+        //    foreach (var a in actualEvents.Where(x => x.Protocol == "S6F11"))
+        //    {
+        //        if (!matchedActualEvents.Contains(a))
+        //        {
+        //            actualStatuses[a] = "#E06C75"; // RED: This message shouldn't be here!
+        //            extraMessages++;
+        //        }
+        //    }
+
+        //    foreach (var a in actualEvents.Where(x => x.Protocol == "S6F11")) ActualSequenceTree.Items.Add(CreateReadOnlyS6F11Node(a, actualStatuses[a]));
+        //    foreach (var target in expectedEvents) ExpectedSequenceTree.Items.Add(CreateReadOnlyS6F11Node(target, expectedStatuses[target]));
+
+        //    // STRICT SUMMARY: It only goes Green if EVERYTHING is completely perfect
+        //    if (perfectMatches == expectedEvents.Count && extraMessages == 0)
+        //    {
+        //        AnalysisSummaryText.Text = $"ANALYSIS COMPLETE | Perfect Strict Sequence! ({perfectMatches} Matches)";
+        //        AnalysisSummaryText.Foreground = new System.Windows.Media.SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#98C379"));
+        //    }
+        //    else
+        //    {
+        //        AnalysisSummaryText.Text = $"ANALYSIS FAILED | Expected: {perfectMatches}/{expectedEvents.Count} | Unexpected Extras: {extraMessages}";
+        //        AnalysisSummaryText.Foreground = new System.Windows.Media.SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#E06C75"));
+        //    }
+        //}
+
+        // ==========================================
+        // C++ LOG PARSE ENGINE (INTEROP)
+        // ==========================================
+        
+
+
+        
+
+
+        // ==========================================
+        // TAB 2: RUN ANALYSIS
+        // ==========================================
         private void OnAnalyseRunClick(object sender, RoutedEventArgs e)
         {
             if (string.IsNullOrWhiteSpace(LogPathTextBox.Text) || AnalysisSequenceComboBox.SelectedItem == null)
@@ -357,120 +479,75 @@ namespace LOG_EZ
 
             ActualSequenceTree.Items.Clear();
             ExpectedSequenceTree.Items.Clear();
-            AnalysisSummaryText.Text = "Analyzing SDR Log...";
+            AnalysisSummaryText.Text = "Running C++ Engine...";
             AnalysisSummaryText.Foreground = new System.Windows.Media.SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#61AFEF"));
 
-            bool applyTimeFilter = Tab2FilterRadio.IsChecked == true;
-            DateTime start = DateTime.MinValue, end = DateTime.MaxValue;
-            if (applyTimeFilter)
+            string startT = "", endT = "";
+            if (Tab2FilterRadio.IsChecked == true)
             {
-                start = CombineDateTime(Tab2StartDate.SelectedDate, Tab2StartTime.Text, false);
-                end = CombineDateTime(Tab2EndDate.SelectedDate, Tab2EndTime.Text, true);
+                // Format matching the C++ string ISO format
+                startT = CombineDateTime(Tab2StartDate.SelectedDate, Tab2StartTime.Text, false).ToString("yyyy-MM-dd HH:mm:ss");
+                endT = CombineDateTime(Tab2EndDate.SelectedDate, Tab2EndTime.Text, true).ToString("yyyy-MM-dd HH:mm:ss");
             }
 
+            // 1. Serialize the Expected List into a String for C++
             string seqTag = ((ComboBoxItem)AnalysisSequenceComboBox.SelectedItem).Tag.ToString();
             XDocument seqDoc = XDocument.Load(filePath);
-            var expectedEvents = new List<LogEvent>();
 
+            var expectedStringList = new List<string>();
             foreach (var s6f11Node in seqDoc.Root?.Element(seqTag)?.Elements("S6F11") ?? Enumerable.Empty<XElement>())
             {
-                expectedEvents.Add(new LogEvent
-                {
-                    DataID = s6f11Node.Descendants("Data_ID").FirstOrDefault()?.Value ?? "*",
-                    CEID = s6f11Node.Descendants("CEID").FirstOrDefault()?.Value ?? "*",
-                    ReportID = s6f11Node.Descendants("Report_ID").FirstOrDefault()?.Value ?? "*"
-                });
+                // Added .Trim() to safely wipe out spaces in your XML file!
+                string d = s6f11Node.Descendants("Data_ID").FirstOrDefault()?.Value?.Trim() ?? "*";
+                string c = s6f11Node.Descendants("CEID").FirstOrDefault()?.Value?.Trim() ?? "*";
+                string r = s6f11Node.Descendants("Report_ID").FirstOrDefault()?.Value?.Trim() ?? "*";
+                expectedStringList.Add($"{d},{c},{r}");
             }
+            string expectedListStr = string.Join(";", expectedStringList);
 
-            if (expectedEvents.Count == 0)
+            if (expectedStringList.Count == 0) return;
+
+            // 2. Define the Callbacks to receive data from C++
+            SdrEngine.ResultCallback resCb = (isExpected, ts, d, c, r, color) =>
             {
-                AnalysisSummaryText.Text = "ERROR: Sequence contains no S6F11 data!";
-                AnalysisSummaryText.Foreground = new System.Windows.Media.SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#E06C75"));
-                return;
-            }
+                // Rebuild the LogEvent temporarily to feed your existing UI Node builder
+                var ev = new LogEvent { Timestamp = ts, DataID = d, CEID = c, ReportID = r };
+                var node = CreateReadOnlyS6F11Node(ev, color);
 
-            var actualEvents = ParseLog(LogPathTextBox.Text, applyTimeFilter, start, end);
+                if (isExpected) ExpectedSequenceTree.Items.Add(node);
+                else ActualSequenceTree.Items.Add(node);
+            };
 
-            int highestIndexReached = -1;
-            int perfectMatches = 0;
-
-            var actualStatuses = new Dictionary<LogEvent, string>();
-            var expectedStatuses = new Dictionary<LogEvent, string>();
-
-            // STRICT TRACKER: Keep track of every event we actually "use"
-            var matchedActualEvents = new HashSet<LogEvent>();
-
-            foreach (var a in actualEvents.Where(x => x.Protocol == "S6F11")) actualStatuses[a] = "#ABB2BF";
-
-            for (int i = 0; i < expectedEvents.Count; i++)
+            SdrEngine.SummaryCallback sumCb = (perfectMatches, totalExpected, extraMessages) =>
             {
-                var target = expectedEvents[i];
-
-                bool IsMatch(LogEvent ev) =>
-                    ev.Protocol == "S6F11" &&
-                    !matchedActualEvents.Contains(ev) && // Prevents matching the same log event twice!
-                    (target.DataID == "*" || target.DataID == ev.DataID) &&
-                    (target.CEID == "*" || target.CEID == ev.CEID) &&
-                    (target.ReportID == "*" || target.ReportID == ev.ReportID);
-
-                int foundIndex = actualEvents.FindIndex(Math.Max(0, highestIndexReached), IsMatch);
-
-                if (foundIndex != -1)
+                if (perfectMatches == totalExpected && extraMessages == 0)
                 {
-                    var ev = actualEvents[foundIndex];
-                    actualStatuses[ev] = "#98C379";
-                    expectedStatuses[target] = "#98C379";
-                    highestIndexReached = foundIndex;
-                    perfectMatches++;
-                    matchedActualEvents.Add(ev);
+                    AnalysisSummaryText.Text = $"ANALYSIS COMPLETE | Perfect Strict Sequence! ({perfectMatches} Matches)";
+                    AnalysisSummaryText.Foreground = new System.Windows.Media.SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#98C379"));
                 }
                 else
                 {
-                    int previousIndex = actualEvents.FindIndex(0, IsMatch);
-                    if (previousIndex != -1 && previousIndex < highestIndexReached)
-                    {
-                        var ev = actualEvents[previousIndex];
-                        actualStatuses[ev] = "#E06C75"; // RED: Event exists but is completely out of order!
-                        expectedStatuses[target] = "#E06C75";
-                        matchedActualEvents.Add(ev);
-                    }
-                    else
-                    {
-                        expectedStatuses[target] = "#E06C75"; // RED: Completely missing from log!
-                    }
+                    AnalysisSummaryText.Text = $"ANALYSIS FAILED | Expected: {perfectMatches}/{totalExpected} | Unexpected Extras: {extraMessages}";
+                    AnalysisSummaryText.Foreground = new System.Windows.Media.SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#E06C75"));
                 }
-            }
+            };
 
-            // STRICT ENFORCEMENT: Flag any unexpected/extra messages in the log!
-            int extraMessages = 0;
-            foreach (var a in actualEvents.Where(x => x.Protocol == "S6F11"))
+            // 3. Fire the C++ Engine!
+            // 3. Fire the C++ Engine!
+            try
             {
-                if (!matchedActualEvents.Contains(a))
-                {
-                    actualStatuses[a] = "#E06C75"; // RED: This message shouldn't be here!
-                    extraMessages++;
-                }
+                SdrEngine.CompareLogSequence(LogPathTextBox.Text, startT, endT, expectedListStr, resCb, sumCb);
             }
-
-            foreach (var a in actualEvents.Where(x => x.Protocol == "S6F11")) ActualSequenceTree.Items.Add(CreateReadOnlyS6F11Node(a, actualStatuses[a]));
-            foreach (var target in expectedEvents) ExpectedSequenceTree.Items.Add(CreateReadOnlyS6F11Node(target, expectedStatuses[target]));
-
-            // STRICT SUMMARY: It only goes Green if EVERYTHING is completely perfect
-            if (perfectMatches == expectedEvents.Count && extraMessages == 0)
+            catch (Exception ex)
             {
-                AnalysisSummaryText.Text = $"ANALYSIS COMPLETE | Perfect Strict Sequence! ({perfectMatches} Matches)";
-                AnalysisSummaryText.Foreground = new System.Windows.Media.SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#98C379"));
-            }
-            else
-            {
-                AnalysisSummaryText.Text = $"ANALYSIS FAILED | Expected: {perfectMatches}/{expectedEvents.Count} | Unexpected Extras: {extraMessages}";
-                AnalysisSummaryText.Foreground = new System.Windows.Media.SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#E06C75"));
+                // This will catch ANY error (Architecture mismatch, Entry Point errors, etc.)
+                MessageBox.Show($"C++ Engine Error:\n\n{ex.Message}", "Fatal Interop Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
         private TreeViewItem CreateReadOnlyS6F11Node(LogEvent ev, string colorHex)
         {
-            string eventName = GetEventName(ev.CEID);
+            string eventName = EventMapper.GetEventName(ev.CEID);
 
             string headerText = string.IsNullOrEmpty(eventName)
                 ? $"S6F11_{ev.CEID}"
@@ -538,7 +615,7 @@ namespace LOG_EZ
                 filterEnd = CombineDateTime(Tab3EndDate.SelectedDate, Tab3EndTime.Text, true);
             }
 
-            var allEvents = ParseLog(LogPathTextBox.Text, applyTimeFilter, filterStart, filterEnd);
+            var allEvents = SdrLogParser.ParseLog(LogPathTextBox.Text, applyTimeFilter, filterStart, filterEnd);
             var filteredEvents = allEvents.AsEnumerable();
 
             if (!showAllData) filteredEvents = filteredEvents.Where(ev => ev.Protocol == "S6F11");
@@ -680,7 +757,7 @@ namespace LOG_EZ
                     DateTime start = CombineDateTime(dpStart.SelectedDate, txtStartTime.Text, false);
                     DateTime end = CombineDateTime(dpEnd.SelectedDate, txtEndTime.Text, true);
 
-                    var extractedEvents = ParseLog(txtFile.Text, true, start, end)
+                    var extractedEvents = SdrLogParser.ParseLog(txtFile.Text, true, start, end)
                                           .Where(x => x.Protocol == "S6F11").ToList();
 
                     if (extractedEvents.Count == 0)
@@ -708,7 +785,7 @@ namespace LOG_EZ
                     foreach (var parsedEv in extractedEvents)
                     {
                         XElement s6f11Node = new XElement("S6F11");
-                        string eventName = GetEventName(parsedEv.CEID);
+                        string eventName = EventMapper.GetEventName(parsedEv.CEID);
                         string attrName = string.IsNullOrEmpty(eventName) ? parsedEv.CEID : $"{parsedEv.CEID}_{eventName}";
                         s6f11Node.SetAttributeValue("NAME", attrName);
 
@@ -1177,7 +1254,7 @@ namespace LOG_EZ
                         var ceidNode = node.Descendants("CEID").FirstOrDefault();
                         string ceidVal = ceidNode != null ? ceidNode.Value : "*";
 
-                        string eventName = GetEventName(ceidVal);
+                        string eventName = EventMapper.GetEventName(ceidVal);
 
                         // REMOVED the S6F11_ prefix for the XML attribute
                         string attrName = string.IsNullOrEmpty(eventName) ? ceidVal : $"{ceidVal}_{eventName}";

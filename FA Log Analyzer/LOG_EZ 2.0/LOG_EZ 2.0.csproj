@@ -6,6 +6,7 @@
 		<Nullable>enable</Nullable>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<UseWPF>true</UseWPF>
+		<Platforms>AnyCPU;x64</Platforms>
 	</PropertyGroup>
 	<ItemGroup>
 	  <None Remove="sdrlog logo.jpeg" />
@@ -14,10 +15,23 @@
 
 	<ItemGroup>
 		<PackageReference Include="Nancy" Version="2.0.0" />
+		<PackageReference Include="Newtonsoft.Json" Version="9.0.1" />
 	</ItemGroup>
 
 	<ItemGroup>
 	  <Resource Include="sdrlog logo.jpeg" />
 	  <Resource Include="sdrlog logo_1.jpeg" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <EditorConfigFiles Remove="C:\Users\ArJuN\OneDrive\Desktop\MY PROJECT\LOG PROJECT KCS %2815 -6-2026%29\LOG_EZ 2.0\.editorconfig" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <None Include="C:\Users\ArJuN\OneDrive\Desktop\MY PROJECT\LOG PROJECT KCS (15 -6-2026)\LOG_EZ 2.0\.editorconfig" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Folder Include="NewFolder\" />
 	</ItemGroup>
 </Project>
