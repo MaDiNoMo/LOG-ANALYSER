@@ -242,161 +242,7 @@ namespace LOG_EZ
         }
 
 
-        //private void OnAnalyseRunClick(object sender, RoutedEventArgs e)
-        //{
-        //    if (string.IsNullOrWhiteSpace(LogPathTextBox.Text) || AnalysisSequenceComboBox.SelectedItem == null) return;
-
-        //    ActualSequenceTree.Items.Clear();
-        //    ExpectedSequenceTree.Items.Clear();
-        //    AnalysisSummaryText.Text = "Running C++ Engine...";
-        //    AnalysisSummaryText.Foreground = new System.Windows.Media.SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#61AFEF"));
-
-        //    string startT = "", endT = "";
-        //    if (Tab2FilterRadio.IsChecked == true)
-        //    {
-        //        startT = CombineDateTime(Tab2StartDate.SelectedDate, Tab2StartTime.Text, false).ToString("yyyy-MM-dd HH:mm:ss");
-        //        endT = CombineDateTime(Tab2EndDate.SelectedDate, Tab2EndTime.Text, true).ToString("yyyy-MM-dd HH:mm:ss");
-        //    }
-
-        //    string seqTag = ((ComboBoxItem)AnalysisSequenceComboBox.SelectedItem).Tag.ToString();
-        //    XDocument seqDoc = XDocument.Load(filePath);
-        //    var expectedStringList = new List<string>();
-
-        //    foreach (var s6f11Node in seqDoc.Root?.Element(seqTag)?.Elements("S6F11") ?? Enumerable.Empty<XElement>())
-        //    {
-        //        string d = s6f11Node.Descendants("Data_ID").FirstOrDefault()?.Value?.Trim() ?? "*";
-        //        string c = s6f11Node.Descendants("CEID").FirstOrDefault()?.Value?.Trim() ?? "*";
-        //        string r = s6f11Node.Descendants("Report_ID").FirstOrDefault()?.Value?.Trim() ?? "*";
-        //        expectedStringList.Add($"{d},{c},{r}");
-        //    }
-
-        //    string expectedListStr = string.Join(";", expectedStringList);
-        //    if (expectedStringList.Count == 0) return;
-
-        //    SdrEngine.ResultCallback resCb = (isExpected, ts, d, c, r, colorHex) =>
-        //    {
-        //        if (colorHex == "#BLANK") return;
-        //        var ev = new LogEvent { Timestamp = ts, DataID = d, CEID = c, ReportID = r };
-        //        TreeViewItem node = CreateReadOnlyS6F11Node(ev, colorHex);
-        //        if (isExpected) ExpectedSequenceTree.Items.Add(node);
-        //        else ActualSequenceTree.Items.Add(node);
-        //    };
-
-        //    SdrEngine.SummaryCallback sumCb = (perfectMatches, totalExpected, extraMessages) => { };
-
-        //    try
-        //    {
-        //        SdrEngine.CompareLogSequence(LogPathTextBox.Text, startT, endT, expectedListStr, resCb, sumCb);
-        //        SmartAlignTrees();
-
-        //        int totalRows = Math.Min(ExpectedSequenceTree.Items.Count, ActualSequenceTree.Items.Count);
-
-        //        int countPerfect = 0, countMissing = 0, countExtra = 0, countSwaps = 0, totalExpectedTarget = 0;
-
-        //        var pendingE = new List<(int RowNum, string Ceid, TreeViewItem Node)>();
-        //        var pendingA = new List<(int RowNum, string Ceid, TreeViewItem Node)>();
-
-        //        // ==========================================
-        //        // PHASE 1: ALIGNMENT & LINE NUMBERING
-        //        // ==========================================
-        //        for (int k = 0; k < totalRows; k++)
-        //        {
-        //            int rowNum = k + 1; // 1-based Row Number
-        //            var eNode = ExpectedSequenceTree.Items[k] as TreeViewItem;
-        //            var aNode = ActualSequenceTree.Items[k] as TreeViewItem;
-        //            var eBlock = eNode?.Header as TextBlock;
-        //            var aBlock = aNode?.Header as TextBlock;
-
-        //            string eText = eBlock?.Text ?? "";
-        //            string aText = aBlock?.Text ?? "";
-        //            bool eIsBlank = eText.Contains("-------");
-        //            bool aIsBlank = aText.Contains("-------");
-
-        //            if (!eIsBlank) totalExpectedTarget++;
-
-        //            string eCeid = ExtractNodeCeid(eText);
-        //            string aCeid = ExtractNodeCeid(aText);
-
-        //            // Universally apply the Line Number to EVERY node, even the blanks!
-        //            if (!eBlock.Text.StartsWith("[")) eBlock.Text = $"[{rowNum}] {eBlock.Text}";
-        //            if (!aBlock.Text.StartsWith("[")) aBlock.Text = $"[{rowNum}] {aBlock.Text}";
-
-        //            // Check for Perfect Match
-        //            if (!eIsBlank && !aIsBlank && eCeid == aCeid)
-        //            {
-        //                eBlock.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0x98, 0xC3, 0x79)); // Green
-        //                aBlock.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0x98, 0xC3, 0x79)); // Green
-        //                countPerfect++;
-        //            }
-        //            else
-        //            {
-        //                // Queue them up for Swap checking
-        //                if (!eIsBlank) pendingE.Add((rowNum, eCeid, eNode));
-        //                if (!aIsBlank) pendingA.Add((rowNum, aCeid, aNode));
-        //            }
-        //        }
-
-        //        // ==========================================
-        //        // PHASE 2: RESOLVE SWAPS
-        //        // ==========================================
-        //        foreach (var pe in pendingE.ToList())
-        //        {
-        //            var pa = pendingA.FirstOrDefault(x => x.Ceid == pe.Ceid);
-        //            if (pa.Ceid != null)
-        //            {
-        //                var eBlock = pe.Node.Header as TextBlock;
-        //                var aBlock = pa.Node.Header as TextBlock;
-
-        //                // Double-Sided Swap Indicators
-        //                eBlock.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0xC6, 0x78, 0xDD)); // Purple
-        //                //eBlock.Text += $"   <-- (Swapped to Line {pa.RowNum})";
-
-        //                aBlock.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0xC6, 0x78, 0xDD)); // Purple
-        //                aBlock.Text += $"   <-- (Expected at Line {pe.RowNum})";
-
-        //                countSwaps++;
-        //                pendingE.Remove(pe);
-        //                pendingA.Remove(pa); // Consume to prevent duplicate bugs
-        //            }
-        //        }
-
-        //        // ==========================================
-        //        // PHASE 3: RESOLVE MISSING & EXTRAS
-        //        // ==========================================
-        //        foreach (var pe in pendingE)
-        //        {
-        //            var eBlock = pe.Node.Header as TextBlock;
-        //            eBlock.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0xE0, 0x6C, 0x75)); // Red
-        //            countMissing++;
-        //        }
-
-        //        foreach (var pa in pendingA)
-        //        {
-        //            var aBlock = pa.Node.Header as TextBlock;
-        //            aBlock.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0xE5, 0xC0, 0x7B)); // Yellow
-        //            countExtra++;
-        //        }
-
-        //        // ==========================================
-        //        // PHASE 4: SUMMARY
-        //        // ==========================================
-        //        if (countPerfect == totalExpectedTarget && countExtra == 0 && countMissing == 0 && countSwaps == 0)
-        //        {
-        //            AnalysisSummaryText.Text = $"SEQUENCE VALIDATED: Full Compliance | Matches: {countPerfect}/{totalExpectedTarget}";
-        //            AnalysisSummaryText.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0x98, 0xC3, 0x79));
-        //        }
-        //        else
-        //        {
-        //            string status = (countExtra > 0 || countMissing > 0 || countSwaps > 0) ? "SEQUENCE DRIFT DETECTED" : "SEQUENCE DEVIATION";
-        //            //AnalysisSummaryText.Text = $"{status} | Expected: {totalExpectedTarget} | Matches: {countPerfect} | Swaps: {countSwaps} | Missing: {countMissing} | Extras: {countExtra}";
-        //            AnalysisSummaryText.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0xE0, 0x6C, 0x75));
-        //        }
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        MessageBox.Show($"C++ Engine Error:\n\n{ex.Message}", "Fatal Interop Error", MessageBoxButton.OK, MessageBoxImage.Error);
-        //    }
-        //}
+        
         private void OnAnalyseRunClick(object sender, RoutedEventArgs e)
         {
             if (string.IsNullOrWhiteSpace(LogPathTextBox.Text) || AnalysisSequenceComboBox.SelectedItem == null) return;
@@ -404,7 +250,7 @@ namespace LOG_EZ
             ActualSequenceTree.Items.Clear();
             ExpectedSequenceTree.Items.Clear();
             //AnalysisSummaryText.Text = "Running C++ Engine...";
-            AnalysisSummaryText.Foreground = new System.Windows.Media.SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#61AFEF"));
+            //AnalysisSummaryText.Foreground = new System.Windows.Media.SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#61AFEF"));
 
             string startT = "", endT = "";
             if (Tab2FilterRadio.IsChecked == true)
@@ -541,22 +387,7 @@ namespace LOG_EZ
 
                     // Color the Expected side blank Yellow to show the gap
                     if (ExpectedSequenceTree.Items[pa.RowNum - 1] is TreeViewItem eBlankNode && eBlankNode.Header is TextBlock eBlankBlock)
-                        eBlankBlock.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0xE5, 0xC0, 0x7B)); // Yellow
-                }
-
-                // ==========================================
-                // PHASE 4: SUMMARY
-                // ==========================================
-                if (countPerfect == totalExpectedTarget && countExtra == 0 && countMissing == 0 && countSwaps == 0)
-                {
-                    AnalysisSummaryText.Text = $"SEQUENCE VALIDATED: Full Compliance | Matches: {countPerfect}/{totalExpectedTarget}";
-                    AnalysisSummaryText.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0x98, 0xC3, 0x79));
-                }
-                else
-                {
-                    string status = (countExtra > 0 || countMissing > 0 || countSwaps > 0) ? "SEQUENCE DRIFT DETECTED" : "SEQUENCE DEVIATION";
-                    //AnalysisSummaryText.Text = $"{status} | Expected: {totalExpectedTarget} | Matches: {countPerfect} | Swaps: {countSwaps} | Missing: {countMissing} | Extras: {countExtra}";
-                    AnalysisSummaryText.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0xE0, 0x6C, 0x75));
+                        eBlankBlock.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0xE5, 0xC0, 0x7B));
                 }
             }
             catch (Exception ex)
@@ -1393,7 +1224,7 @@ namespace LOG_EZ
                         writer.WriteLine("LOG ANALYZER 4.0 - SEQUENCE REPORT");
                         writer.WriteLine($"Generated on:,{DateTime.Now}");
                         writer.WriteLine($"Target Sequence:,{((ComboBoxItem)AnalysisSequenceComboBox.SelectedItem)?.Content.ToString().Replace(",", " ")}");
-                        writer.WriteLine($"Overall Result:,{AnalysisSummaryText.Text}");
+                        //writer.WriteLine($"Overall Result:,{AnalysisSummaryText.Text}");
                         writer.WriteLine("");
                         writer.WriteLine("STATUS,EVENT NAME,DATA_ID,CEID,REPORT_ID");
 

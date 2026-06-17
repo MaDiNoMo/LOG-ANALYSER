@@ -403,7 +403,7 @@
 
                                     </StackPanel>
 
-                                    <TextBlock x:Name="AnalysisSummaryText" Text="Waiting for Analysis Run..." FontSize="14" Foreground="{StaticResource TextMainBrush}" FontWeight="Bold" HorizontalAlignment="Center"/>
+                                    <!--<TextBlock x:Name="AnalysisSummaryText" Text="Waiting for Analysis Run..." FontSize="14" Foreground="{StaticResource TextMainBrush}" FontWeight="Bold" HorizontalAlignment="Center"/>-->
 
                                 </StackPanel>
 
