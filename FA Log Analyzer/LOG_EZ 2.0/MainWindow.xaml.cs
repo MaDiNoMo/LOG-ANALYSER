@@ -14,9 +14,11 @@ namespace LOG_EZ
     {
         private readonly string filePath = @"C:\Users\ArJuN\OneDrive\Documents\sequencesaver\Sequence.xml";
         private bool showAllData = false;
-        private ScrollViewer _actualScrollViewer;
-        private ScrollViewer _expectedScrollViewer;
-        private bool _isSyncingScroll = false;
+        private bool _isSyncingExpand = false;
+
+        // These track the scrollers once the UI loads to prevent scroll-sync loop crashes
+        private ScrollViewer _actualScroll;
+        private ScrollViewer _expectedScroll;
 
         public MainWindow()
         {
@@ -28,63 +30,29 @@ namespace LOG_EZ
             InitializeSecsPalette();
             InitializeMockDatabase();
 
-            // NEW: Wait for the window to finish drawing, then grab the scroll bars!
             this.Loaded += MainWindow_Loaded;
         }
+
         private void MainWindow_Loaded(object sender, RoutedEventArgs e)
         {
-            // Force the templates to build
             ActualSequenceTree.ApplyTemplate();
             ExpectedSequenceTree.ApplyTemplate();
 
-            // Get the scrollers by the names we just defined in XAML
-            var actualScroll = ActualSequenceTree.Template.FindName("PART_ActualScroller", ActualSequenceTree) as ScrollViewer;
-            var expectedScroll = ExpectedSequenceTree.Template.FindName("PART_ExpectedScroller", ExpectedSequenceTree) as ScrollViewer;
+            _actualScroll = ActualSequenceTree.Template.FindName("PART_ActualScroller", ActualSequenceTree) as ScrollViewer;
+            _expectedScroll = ExpectedSequenceTree.Template.FindName("PART_ExpectedScroller", ExpectedSequenceTree) as ScrollViewer;
 
-            if (actualScroll != null && expectedScroll != null)
+            if (_actualScroll != null && _expectedScroll != null)
             {
-                // This links them together at the WPF Engine level
-                // Whenever one scrolls, the other mirrors it automatically
-                actualScroll.ScrollChanged += (s, args) => {
-                    if (Math.Abs(expectedScroll.VerticalOffset - actualScroll.VerticalOffset) > 1.0)
-                        expectedScroll.ScrollToVerticalOffset(actualScroll.VerticalOffset);
+                _actualScroll.ScrollChanged += (s, args) => {
+                    if (Math.Abs(_expectedScroll.VerticalOffset - _actualScroll.VerticalOffset) > 1.0)
+                        _expectedScroll.ScrollToVerticalOffset(_actualScroll.VerticalOffset);
                 };
 
-                expectedScroll.ScrollChanged += (s, args) => {
-                    if (Math.Abs(actualScroll.VerticalOffset - expectedScroll.VerticalOffset) > 1.0)
-                        actualScroll.ScrollToVerticalOffset(expectedScroll.VerticalOffset);
+                _expectedScroll.ScrollChanged += (s, args) => {
+                    if (Math.Abs(_actualScroll.VerticalOffset - _expectedScroll.VerticalOffset) > 1.0)
+                        _actualScroll.ScrollToVerticalOffset(_expectedScroll.VerticalOffset);
                 };
             }
-        }
-
-        // ==========================================
-        // SYNCHRONIZED SCROLLING LOGIC
-        // ==========================================
-        private void ScrollViewer_ScrollChanged(object sender, ScrollChangedEventArgs e)
-        {
-            if (_isSyncingScroll) return;
-
-            var scroller = sender as ScrollViewer;
-            if (scroller == null) return;
-
-            _isSyncingScroll = true;
-            try
-            {
-                if (scroller == _actualScrollViewer && _expectedScrollViewer != null)
-                {
-                    // Sync by percentage to ensure they stay locked even if content varies
-                    double ratio = scroller.VerticalOffset / scroller.ScrollableHeight;
-                    if (!double.IsNaN(ratio))
-                        _expectedScrollViewer.ScrollToVerticalOffset(ratio * _expectedScrollViewer.ScrollableHeight);
-                }
-                else if (scroller == _expectedScrollViewer && _actualScrollViewer != null)
-                {
-                    double ratio = scroller.VerticalOffset / scroller.ScrollableHeight;
-                    if (!double.IsNaN(ratio))
-                        _actualScrollViewer.ScrollToVerticalOffset(ratio * _actualScrollViewer.ScrollableHeight);
-                }
-            }
-            finally { _isSyncingScroll = false; }
         }
 
         // ==========================================
@@ -135,32 +103,22 @@ namespace LOG_EZ
             }
         }
 
-        // ==========================================
-        // SYNCHRONIZED DEEP TREE EXPANSION
-        // ==========================================
-        private bool _isSyncingExpand = false;
-
         private void SyncTreeNodes(object sender, RoutedEventArgs e)
         {
             if (_isSyncingExpand) return;
             var tvi = sender as TreeViewItem;
 
-            // Only react to the root node itself being clicked
             if (tvi == null || e.OriginalSource != tvi) return;
 
             _isSyncingExpand = true;
             try
             {
                 bool isExpanded = tvi.IsExpanded;
-
-                // 1. Force the clicked side to pop open all nested [Lists]!
                 if (isExpanded) tvi.ExpandSubtree();
 
-                // Figure out which tree we need to sync
                 TreeView sourceTree = ActualSequenceTree.Items.Contains(tvi) ? ActualSequenceTree : ExpectedSequenceTree;
                 TreeView targetTree = sourceTree == ActualSequenceTree ? ExpectedSequenceTree : ActualSequenceTree;
 
-                // 2. Expand the exact same index on the opposite side deeply
                 int index = sourceTree.Items.IndexOf(tvi);
                 if (index >= 0 && index < targetTree.Items.Count)
                 {
@@ -178,9 +136,6 @@ namespace LOG_EZ
             }
         }
 
-        // ==========================================
-        // DYNAMIC DATE PICKER CONSTRAINTS
-        // ==========================================
         private void UpdateDatePickersFromLog(string path)
         {
             DateTime? minDate = null;
@@ -211,100 +166,22 @@ namespace LOG_EZ
             catch { /* Silently skip if reading fails */ }
         }
 
-       
-        // ==========================================
-        // TAB 2: RUN ANALYSIS
-        // ==========================================
-        private void OnAnalyseRunClick(object sender, RoutedEventArgs e)
-        {
-            if (string.IsNullOrWhiteSpace(LogPathTextBox.Text) || AnalysisSequenceComboBox.SelectedItem == null) return;
-
-            ActualSequenceTree.Items.Clear();
-            ExpectedSequenceTree.Items.Clear();
-            AnalysisSummaryText.Text = "Running C++ Engine...";
-            AnalysisSummaryText.Foreground = new System.Windows.Media.SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#61AFEF"));
-
-            string startT = "", endT = "";
-            if (Tab2FilterRadio.IsChecked == true)
-            {
-                startT = CombineDateTime(Tab2StartDate.SelectedDate, Tab2StartTime.Text, false).ToString("yyyy-MM-dd HH:mm:ss");
-                endT = CombineDateTime(Tab2EndDate.SelectedDate, Tab2EndTime.Text, true).ToString("yyyy-MM-dd HH:mm:ss");
-            }
-
-            string seqTag = ((ComboBoxItem)AnalysisSequenceComboBox.SelectedItem).Tag.ToString();
-            XDocument seqDoc = XDocument.Load(filePath);
-            var expectedStringList = new List<string>();
-
-            foreach (var s6f11Node in seqDoc.Root?.Element(seqTag)?.Elements("S6F11") ?? Enumerable.Empty<XElement>())
-            {
-                string d = s6f11Node.Descendants("Data_ID").FirstOrDefault()?.Value?.Trim() ?? "*";
-                string c = s6f11Node.Descendants("CEID").FirstOrDefault()?.Value?.Trim() ?? "*";
-                string r = s6f11Node.Descendants("Report_ID").FirstOrDefault()?.Value?.Trim() ?? "*";
-                expectedStringList.Add($"{d},{c},{r}");
-            }
-
-            string expectedListStr = string.Join(";", expectedStringList);
-            if (expectedStringList.Count == 0) return;
-
-            SdrEngine.ResultCallback resCb = (isExpected, ts, d, c, r, colorHex) =>
-            {
-                TreeViewItem node;
-
-                if (colorHex == "#BLANK")
-                {
-                    node = CreateBlankNode();
-                }
-                else
-                {
-                    var ev = new LogEvent { Timestamp = ts, DataID = d, CEID = c, ReportID = r };
-                    node = CreateReadOnlyS6F11Node(ev, colorHex);
-                }
-
-                if (isExpected) ExpectedSequenceTree.Items.Add(node);
-                else ActualSequenceTree.Items.Add(node);
-            };
-
-            SdrEngine.SummaryCallback sumCb = (perfectMatches, totalExpected, extraMessages) =>
-            {
-                if (perfectMatches == totalExpected && extraMessages == 0)
-                {
-                    AnalysisSummaryText.Text = $"ANALYSIS COMPLETE | Perfect Strict Sequence! ({perfectMatches} Matches)";
-                    AnalysisSummaryText.Foreground = new System.Windows.Media.SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#98C379"));
-                }
-                else
-                {
-                    AnalysisSummaryText.Text = $"ANALYSIS FAILED | Expected: {perfectMatches}/{totalExpected} | Unexpected Extras: {extraMessages}";
-                    AnalysisSummaryText.Foreground = new System.Windows.Media.SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#E06C75"));
-                }
-            };
-
-            try
-            {
-                SdrEngine.CompareLogSequence(LogPathTextBox.Text, startT, endT, expectedListStr, resCb, sumCb);
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"C++ Engine Error:\n\n{ex.Message}", "Fatal Interop Error", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-        }
-
         // ==========================================
         // NODE GENERATORS
         // ==========================================
         private TreeViewItem CreateBlankNode()
         {
             var rootNode = new TreeViewItem { IsExpanded = false, Focusable = false };
-
             rootNode.Header = new TextBlock
             {
-                Text = "-------------------",
+                Text = "--------",
+                //Text = "",
                 Foreground = new System.Windows.Media.SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#5C6370")),
                 FontFamily = new System.Windows.Media.FontFamily("Consolas"),
                 FontWeight = FontWeights.Bold,
                 VerticalAlignment = VerticalAlignment.Center,
                 Margin = new Thickness(0, 4, 0, 4)
             };
-
             return rootNode;
         }
 
@@ -363,6 +240,408 @@ namespace LOG_EZ
             }
             return "-";
         }
+
+
+        //private void OnAnalyseRunClick(object sender, RoutedEventArgs e)
+        //{
+        //    if (string.IsNullOrWhiteSpace(LogPathTextBox.Text) || AnalysisSequenceComboBox.SelectedItem == null) return;
+
+        //    ActualSequenceTree.Items.Clear();
+        //    ExpectedSequenceTree.Items.Clear();
+        //    AnalysisSummaryText.Text = "Running C++ Engine...";
+        //    AnalysisSummaryText.Foreground = new System.Windows.Media.SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#61AFEF"));
+
+        //    string startT = "", endT = "";
+        //    if (Tab2FilterRadio.IsChecked == true)
+        //    {
+        //        startT = CombineDateTime(Tab2StartDate.SelectedDate, Tab2StartTime.Text, false).ToString("yyyy-MM-dd HH:mm:ss");
+        //        endT = CombineDateTime(Tab2EndDate.SelectedDate, Tab2EndTime.Text, true).ToString("yyyy-MM-dd HH:mm:ss");
+        //    }
+
+        //    string seqTag = ((ComboBoxItem)AnalysisSequenceComboBox.SelectedItem).Tag.ToString();
+        //    XDocument seqDoc = XDocument.Load(filePath);
+        //    var expectedStringList = new List<string>();
+
+        //    foreach (var s6f11Node in seqDoc.Root?.Element(seqTag)?.Elements("S6F11") ?? Enumerable.Empty<XElement>())
+        //    {
+        //        string d = s6f11Node.Descendants("Data_ID").FirstOrDefault()?.Value?.Trim() ?? "*";
+        //        string c = s6f11Node.Descendants("CEID").FirstOrDefault()?.Value?.Trim() ?? "*";
+        //        string r = s6f11Node.Descendants("Report_ID").FirstOrDefault()?.Value?.Trim() ?? "*";
+        //        expectedStringList.Add($"{d},{c},{r}");
+        //    }
+
+        //    string expectedListStr = string.Join(";", expectedStringList);
+        //    if (expectedStringList.Count == 0) return;
+
+        //    SdrEngine.ResultCallback resCb = (isExpected, ts, d, c, r, colorHex) =>
+        //    {
+        //        if (colorHex == "#BLANK") return;
+        //        var ev = new LogEvent { Timestamp = ts, DataID = d, CEID = c, ReportID = r };
+        //        TreeViewItem node = CreateReadOnlyS6F11Node(ev, colorHex);
+        //        if (isExpected) ExpectedSequenceTree.Items.Add(node);
+        //        else ActualSequenceTree.Items.Add(node);
+        //    };
+
+        //    SdrEngine.SummaryCallback sumCb = (perfectMatches, totalExpected, extraMessages) => { };
+
+        //    try
+        //    {
+        //        SdrEngine.CompareLogSequence(LogPathTextBox.Text, startT, endT, expectedListStr, resCb, sumCb);
+        //        SmartAlignTrees();
+
+        //        int totalRows = Math.Min(ExpectedSequenceTree.Items.Count, ActualSequenceTree.Items.Count);
+
+        //        int countPerfect = 0, countMissing = 0, countExtra = 0, countSwaps = 0, totalExpectedTarget = 0;
+
+        //        var pendingE = new List<(int RowNum, string Ceid, TreeViewItem Node)>();
+        //        var pendingA = new List<(int RowNum, string Ceid, TreeViewItem Node)>();
+
+        //        // ==========================================
+        //        // PHASE 1: ALIGNMENT & LINE NUMBERING
+        //        // ==========================================
+        //        for (int k = 0; k < totalRows; k++)
+        //        {
+        //            int rowNum = k + 1; // 1-based Row Number
+        //            var eNode = ExpectedSequenceTree.Items[k] as TreeViewItem;
+        //            var aNode = ActualSequenceTree.Items[k] as TreeViewItem;
+        //            var eBlock = eNode?.Header as TextBlock;
+        //            var aBlock = aNode?.Header as TextBlock;
+
+        //            string eText = eBlock?.Text ?? "";
+        //            string aText = aBlock?.Text ?? "";
+        //            bool eIsBlank = eText.Contains("-------");
+        //            bool aIsBlank = aText.Contains("-------");
+
+        //            if (!eIsBlank) totalExpectedTarget++;
+
+        //            string eCeid = ExtractNodeCeid(eText);
+        //            string aCeid = ExtractNodeCeid(aText);
+
+        //            // Universally apply the Line Number to EVERY node, even the blanks!
+        //            if (!eBlock.Text.StartsWith("[")) eBlock.Text = $"[{rowNum}] {eBlock.Text}";
+        //            if (!aBlock.Text.StartsWith("[")) aBlock.Text = $"[{rowNum}] {aBlock.Text}";
+
+        //            // Check for Perfect Match
+        //            if (!eIsBlank && !aIsBlank && eCeid == aCeid)
+        //            {
+        //                eBlock.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0x98, 0xC3, 0x79)); // Green
+        //                aBlock.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0x98, 0xC3, 0x79)); // Green
+        //                countPerfect++;
+        //            }
+        //            else
+        //            {
+        //                // Queue them up for Swap checking
+        //                if (!eIsBlank) pendingE.Add((rowNum, eCeid, eNode));
+        //                if (!aIsBlank) pendingA.Add((rowNum, aCeid, aNode));
+        //            }
+        //        }
+
+        //        // ==========================================
+        //        // PHASE 2: RESOLVE SWAPS
+        //        // ==========================================
+        //        foreach (var pe in pendingE.ToList())
+        //        {
+        //            var pa = pendingA.FirstOrDefault(x => x.Ceid == pe.Ceid);
+        //            if (pa.Ceid != null)
+        //            {
+        //                var eBlock = pe.Node.Header as TextBlock;
+        //                var aBlock = pa.Node.Header as TextBlock;
+
+        //                // Double-Sided Swap Indicators
+        //                eBlock.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0xC6, 0x78, 0xDD)); // Purple
+        //                //eBlock.Text += $"   <-- (Swapped to Line {pa.RowNum})";
+
+        //                aBlock.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0xC6, 0x78, 0xDD)); // Purple
+        //                aBlock.Text += $"   <-- (Expected at Line {pe.RowNum})";
+
+        //                countSwaps++;
+        //                pendingE.Remove(pe);
+        //                pendingA.Remove(pa); // Consume to prevent duplicate bugs
+        //            }
+        //        }
+
+        //        // ==========================================
+        //        // PHASE 3: RESOLVE MISSING & EXTRAS
+        //        // ==========================================
+        //        foreach (var pe in pendingE)
+        //        {
+        //            var eBlock = pe.Node.Header as TextBlock;
+        //            eBlock.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0xE0, 0x6C, 0x75)); // Red
+        //            countMissing++;
+        //        }
+
+        //        foreach (var pa in pendingA)
+        //        {
+        //            var aBlock = pa.Node.Header as TextBlock;
+        //            aBlock.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0xE5, 0xC0, 0x7B)); // Yellow
+        //            countExtra++;
+        //        }
+
+        //        // ==========================================
+        //        // PHASE 4: SUMMARY
+        //        // ==========================================
+        //        if (countPerfect == totalExpectedTarget && countExtra == 0 && countMissing == 0 && countSwaps == 0)
+        //        {
+        //            AnalysisSummaryText.Text = $"SEQUENCE VALIDATED: Full Compliance | Matches: {countPerfect}/{totalExpectedTarget}";
+        //            AnalysisSummaryText.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0x98, 0xC3, 0x79));
+        //        }
+        //        else
+        //        {
+        //            string status = (countExtra > 0 || countMissing > 0 || countSwaps > 0) ? "SEQUENCE DRIFT DETECTED" : "SEQUENCE DEVIATION";
+        //            //AnalysisSummaryText.Text = $"{status} | Expected: {totalExpectedTarget} | Matches: {countPerfect} | Swaps: {countSwaps} | Missing: {countMissing} | Extras: {countExtra}";
+        //            AnalysisSummaryText.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0xE0, 0x6C, 0x75));
+        //        }
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        MessageBox.Show($"C++ Engine Error:\n\n{ex.Message}", "Fatal Interop Error", MessageBoxButton.OK, MessageBoxImage.Error);
+        //    }
+        //}
+        private void OnAnalyseRunClick(object sender, RoutedEventArgs e)
+        {
+            if (string.IsNullOrWhiteSpace(LogPathTextBox.Text) || AnalysisSequenceComboBox.SelectedItem == null) return;
+
+            ActualSequenceTree.Items.Clear();
+            ExpectedSequenceTree.Items.Clear();
+            //AnalysisSummaryText.Text = "Running C++ Engine...";
+            AnalysisSummaryText.Foreground = new System.Windows.Media.SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#61AFEF"));
+
+            string startT = "", endT = "";
+            if (Tab2FilterRadio.IsChecked == true)
+            {
+                startT = CombineDateTime(Tab2StartDate.SelectedDate, Tab2StartTime.Text, false).ToString("yyyy-MM-dd HH:mm:ss");
+                endT = CombineDateTime(Tab2EndDate.SelectedDate, Tab2EndTime.Text, true).ToString("yyyy-MM-dd HH:mm:ss");
+            }
+
+            string seqTag = ((ComboBoxItem)AnalysisSequenceComboBox.SelectedItem).Tag.ToString();
+            XDocument seqDoc = XDocument.Load(filePath);
+            var expectedStringList = new List<string>();
+
+            foreach (var s6f11Node in seqDoc.Root?.Element(seqTag)?.Elements("S6F11") ?? Enumerable.Empty<XElement>())
+            {
+                string d = s6f11Node.Descendants("Data_ID").FirstOrDefault()?.Value?.Trim() ?? "*";
+                string c = s6f11Node.Descendants("CEID").FirstOrDefault()?.Value?.Trim() ?? "*";
+                string r = s6f11Node.Descendants("Report_ID").FirstOrDefault()?.Value?.Trim() ?? "*";
+                expectedStringList.Add($"{d},{c},{r}");
+            }
+
+            string expectedListStr = string.Join(";", expectedStringList);
+            if (expectedStringList.Count == 0) return;
+
+            SdrEngine.ResultCallback resCb = (isExpected, ts, d, c, r, colorHex) =>
+            {
+                if (colorHex == "#BLANK") return;
+                var ev = new LogEvent { Timestamp = ts, DataID = d, CEID = c, ReportID = r };
+                TreeViewItem node = CreateReadOnlyS6F11Node(ev, colorHex);
+                if (isExpected) ExpectedSequenceTree.Items.Add(node);
+                else ActualSequenceTree.Items.Add(node);
+            };
+
+            SdrEngine.SummaryCallback sumCb = (perfectMatches, totalExpected, extraMessages) => { };
+
+            try
+            {
+                SdrEngine.CompareLogSequence(LogPathTextBox.Text, startT, endT, expectedListStr, resCb, sumCb);
+                SmartAlignTrees();
+
+                int totalRows = Math.Min(ExpectedSequenceTree.Items.Count, ActualSequenceTree.Items.Count);
+
+                int countPerfect = 0, countMissing = 0, countExtra = 0, countSwaps = 0, totalExpectedTarget = 0;
+
+                var pendingE = new List<(int RowNum, string Ceid, TreeViewItem Node)>();
+                var pendingA = new List<(int RowNum, string Ceid, TreeViewItem Node)>();
+
+                // ==========================================
+                // PHASE 1: ALIGNMENT & LINE NUMBERING
+                // ==========================================
+                for (int k = 0; k < totalRows; k++)
+                {
+                    int rowNum = k + 1; // 1-based Row Number
+                    var eNode = ExpectedSequenceTree.Items[k] as TreeViewItem;
+                    var aNode = ActualSequenceTree.Items[k] as TreeViewItem;
+                    var eBlock = eNode?.Header as TextBlock;
+                    var aBlock = aNode?.Header as TextBlock;
+
+                    string eText = eBlock?.Text ?? "";
+                    string aText = aBlock?.Text ?? "";
+                    bool eIsBlank = eText.Contains("-------");
+                    bool aIsBlank = aText.Contains("-------");
+
+                    if (!eIsBlank) totalExpectedTarget++;
+
+                    string eCeid = ExtractNodeCeid(eText);
+                    string aCeid = ExtractNodeCeid(aText);
+
+                    if (!eBlock.Text.StartsWith("[")) eBlock.Text = $"[{rowNum}] {eBlock.Text}";
+                    if (!aBlock.Text.StartsWith("[")) aBlock.Text = $"[{rowNum}] {aBlock.Text}";
+
+                    if (!eIsBlank && !aIsBlank && eCeid == aCeid)
+                    {
+                        eBlock.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0x98, 0xC3, 0x79)); // Green
+                        aBlock.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0x98, 0xC3, 0x79)); // Green
+                        countPerfect++;
+                    }
+                    else
+                    {
+                        if (!eIsBlank) pendingE.Add((rowNum, eCeid, eNode));
+                        if (!aIsBlank) pendingA.Add((rowNum, aCeid, aNode));
+                    }
+                }
+
+                // ==========================================
+                // PHASE 2: RESOLVE SWAPS (Now colors blanks Purple!)
+                // ==========================================
+                foreach (var pe in pendingE.ToList())
+                {
+                    var pa = pendingA.FirstOrDefault(x => x.Ceid == pe.Ceid);
+                    if (pa.Ceid != null)
+                    {
+                        var eBlock = pe.Node.Header as TextBlock;
+                        var aBlock = pa.Node.Header as TextBlock;
+
+                        // Color Original Nodes
+                        eBlock.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0xC6, 0x78, 0xDD)); // Purple
+                        //eBlock.Text += $"   <-- (Swapped to Line {pa.RowNum})";
+
+                        aBlock.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0xC6, 0x78, 0xDD)); // Purple
+                        aBlock.Text += $"   <-- (Expected at Line {pe.RowNum})";
+
+                        // Color the Blank spaces on the opposite sides
+                        if (ActualSequenceTree.Items[pe.RowNum - 1] is TreeViewItem aBlankNode && aBlankNode.Header is TextBlock aBlankBlock)
+                            aBlankBlock.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0xC6, 0x78, 0xDD));
+
+                        if (ExpectedSequenceTree.Items[pa.RowNum - 1] is TreeViewItem eBlankNode && eBlankNode.Header is TextBlock eBlankBlock)
+                            eBlankBlock.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0xC6, 0x78, 0xDD));
+
+                        countSwaps++;
+                        pendingE.Remove(pe);
+                        pendingA.Remove(pa);
+                    }
+                }
+
+                // ==========================================
+                // PHASE 3: RESOLVE MISSING & EXTRAS (Now colors blanks Red/Yellow!)
+                // ==========================================
+                foreach (var pe in pendingE)
+                {
+                    var eBlock = pe.Node.Header as TextBlock;
+                    eBlock.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0xE0, 0x6C, 0x75)); // Red
+                    countMissing++;
+
+                    // Color the Actual side blank Red to show the gap
+                    if (ActualSequenceTree.Items[pe.RowNum - 1] is TreeViewItem aBlankNode && aBlankNode.Header is TextBlock aBlankBlock)
+                        aBlankBlock.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0xE0, 0x6C, 0x75)); // Red
+                }
+
+                foreach (var pa in pendingA)
+                {
+                    var aBlock = pa.Node.Header as TextBlock;
+                    aBlock.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0xE5, 0xC0, 0x7B)); // Yellow
+                    countExtra++;
+
+                    // Color the Expected side blank Yellow to show the gap
+                    if (ExpectedSequenceTree.Items[pa.RowNum - 1] is TreeViewItem eBlankNode && eBlankNode.Header is TextBlock eBlankBlock)
+                        eBlankBlock.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0xE5, 0xC0, 0x7B)); // Yellow
+                }
+
+                // ==========================================
+                // PHASE 4: SUMMARY
+                // ==========================================
+                if (countPerfect == totalExpectedTarget && countExtra == 0 && countMissing == 0 && countSwaps == 0)
+                {
+                    AnalysisSummaryText.Text = $"SEQUENCE VALIDATED: Full Compliance | Matches: {countPerfect}/{totalExpectedTarget}";
+                    AnalysisSummaryText.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0x98, 0xC3, 0x79));
+                }
+                else
+                {
+                    string status = (countExtra > 0 || countMissing > 0 || countSwaps > 0) ? "SEQUENCE DRIFT DETECTED" : "SEQUENCE DEVIATION";
+                    //AnalysisSummaryText.Text = $"{status} | Expected: {totalExpectedTarget} | Matches: {countPerfect} | Swaps: {countSwaps} | Missing: {countMissing} | Extras: {countExtra}";
+                    AnalysisSummaryText.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0xE0, 0x6C, 0x75));
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"C++ Engine Error:\n\n{ex.Message}", "Fatal Interop Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        // ==========================================
+        // HELPERS FOR ANALYSIS ENGINE
+        // ==========================================
+        private string ExtractNodeCeid(string headerText)
+        {
+            if (string.IsNullOrWhiteSpace(headerText)) return "";
+            var parts = headerText.Split('_');
+            return parts.Length > 1 ? parts[1] : headerText.Replace("[", "").Replace("]", "").Trim();
+        }
+
+        private void SmartAlignTrees()
+        {
+            var expNodes = ExpectedSequenceTree.Items.Cast<TreeViewItem>().ToList();
+            var actNodes = ActualSequenceTree.Items.Cast<TreeViewItem>().ToList();
+
+            ExpectedSequenceTree.Items.Clear();
+            ActualSequenceTree.Items.Clear();
+
+            int[,] dp = new int[expNodes.Count + 1, actNodes.Count + 1];
+
+            for (int i = 1; i <= expNodes.Count; i++)
+            {
+                for (int j = 1; j <= actNodes.Count; j++)
+                {
+                    string eText = ((TextBlock)expNodes[i - 1].Header).Text;
+                    string aText = ((TextBlock)actNodes[j - 1].Header).Text;
+
+                    string eCeid = ExtractNodeCeid(eText);
+                    string aCeid = ExtractNodeCeid(aText);
+
+                    if (!string.IsNullOrEmpty(eCeid) && eCeid == aCeid)
+                        dp[i, j] = dp[i - 1, j - 1] + 1;
+                    else
+                        dp[i, j] = Math.Max(dp[i - 1, j], dp[i, j - 1]);
+                }
+            }
+
+            int x = expNodes.Count, y = actNodes.Count;
+            var alignedExp = new Stack<TreeViewItem>();
+            var alignedAct = new Stack<TreeViewItem>();
+
+            while (x > 0 || y > 0)
+            {
+                if (x > 0 && y > 0)
+                {
+                    string eText = ((TextBlock)expNodes[x - 1].Header).Text;
+                    string aText = ((TextBlock)actNodes[y - 1].Header).Text;
+                    string eCeid = ExtractNodeCeid(eText);
+                    string aCeid = ExtractNodeCeid(aText);
+
+                    if (!string.IsNullOrEmpty(eCeid) && eCeid == aCeid)
+                    {
+                        alignedExp.Push(expNodes[x - 1]);
+                        alignedAct.Push(actNodes[y - 1]);
+                        x--; y--;
+                        continue;
+                    }
+                }
+
+                if (x > 0 && (y == 0 || dp[x - 1, y] >= dp[x, y - 1]))
+                {
+                    alignedExp.Push(expNodes[x - 1]);
+                    alignedAct.Push(CreateBlankNode());
+                    x--;
+                }
+                else
+                {
+                    alignedExp.Push(CreateBlankNode());
+                    alignedAct.Push(actNodes[y - 1]);
+                    y--;
+                }
+            }
+
+            while (alignedExp.Count > 0) ExpectedSequenceTree.Items.Add(alignedExp.Pop());
+            while (alignedAct.Count > 0) ActualSequenceTree.Items.Add(alignedAct.Pop());
+        }
+
 
         // ==========================================
         // TAB 3: LOG EXPLORER ENGINE
@@ -1092,9 +1371,6 @@ namespace LOG_EZ
             }
         }
 
-        // ==========================================
-        // EXPORT REPORT ENGINE
-        // ==========================================
         private void OnSaveReportClick(object sender, RoutedEventArgs e)
         {
             if (ExpectedSequenceTree.Items.Count == 0)
