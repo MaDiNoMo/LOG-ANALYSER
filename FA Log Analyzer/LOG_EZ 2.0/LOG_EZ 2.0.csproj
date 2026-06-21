@@ -11,6 +11,7 @@
 	<ItemGroup>
 	  <None Remove="sdrlog logo.jpeg" />
 	  <None Remove="sdrlog logo_1.jpeg" />
+	  <None Remove="sdrlog_logo_1-removebg-preview.png" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -21,6 +22,7 @@
 	<ItemGroup>
 	  <Resource Include="sdrlog logo.jpeg" />
 	  <Resource Include="sdrlog logo_1.jpeg" />
+	  <Resource Include="sdrlog_logo_1-removebg-preview.png" />
 	</ItemGroup>
 
 	<ItemGroup>
