@@ -1,18 +1,12 @@
 ﻿using Microsoft.Win32;
-using Nancy.Routing.Trie.Nodes;
-using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Reflection.PortableExecutable;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Xml.Linq;
-using System.Net.Http;
-using System.Text;
-using System.Text.Json;
-using System.Threading.Tasks;
+using System.Collections.Generic;
+using System;
+using System.Linq;
 
 namespace LOG_EZ
 {
@@ -46,18 +40,8 @@ namespace LOG_EZ
             public string AttrID { get; set; }
             public string AttrData { get; set; }
 
-            // S14F9 Properties
-            public string OBJSPEC { get; set; }
-            public string OBJTYPE { get; set; }
-            public string ObjID { get; set; }
-            public string ProcessOrderMgmt { get; set; }
-            public string StartMethod { get; set; }
-
-            // S16F15 Properties
-            public string S16DataID { get; set; }
-            public string S16Action { get; set; }
-            public string S16ID { get; set; }
-
+            // S4F17 Properties
+            public string SpoolID { get; set; }
         }
 
         public MainWindow()
@@ -320,10 +304,10 @@ namespace LOG_EZ
 
             return rootNode;
         }
-        private TreeViewItem CreateReadOnlyS16F15Node(LogEvent ev, string colorHex)
+
+        private TreeViewItem CreateReadOnlyS4F17Node(LogEvent ev, string colorHex)
         {
-            // Names the node dynamically based on the Action (e.g., S16F15_ProceedCarrier)
-            string headerText = string.IsNullOrEmpty(ev.S16Action) ? "S16F15_Action" : $"S16F15_{ev.S16Action}";
+            string headerText = $"S4F17_{ev.SpoolID}";
 
             var rootNode = new TreeViewItem { IsExpanded = false, Focusable = false };
             rootNode.Expanded += SyncTreeNodes;
@@ -339,87 +323,59 @@ namespace LOG_EZ
                 Margin = new Thickness(0, 4, 0, 4)
             };
 
-            var outerList = new TreeViewItem { Header = "[List]", IsExpanded = true, Focusable = false };
-            outerList.Items.Add(CreateXmlTagRow("DATAID", ev.S16DataID ?? "0"));
-            outerList.Items.Add(CreateXmlTagRow("TARGET_ID", ev.S16ID ?? ""));
-            outerList.Items.Add(CreateXmlTagRow("ACTION_NAME", ev.S16Action ?? ""));
+            var outerList = new TreeViewItem { Header = "[List]", IsExpanded = false, Focusable = false };
+            outerList.Items.Add(CreateXmlTagRow("Spool_ID", ev.SpoolID ?? "0"));
 
             rootNode.Items.Add(outerList);
             return rootNode;
         }
-        /// S14F9
-        private TreeViewItem CreateReadOnlyS14F9Node(LogEvent ev, string colorHex)
-        {
-            string headerText = string.IsNullOrEmpty(ev.OBJTYPE) ? "S14F9_CreateObject" : $"S14F9_{ev.OBJTYPE}";
 
-            var rootNode = new TreeViewItem { IsExpanded = false, Focusable = false };
-            rootNode.Expanded += SyncTreeNodes;
-            rootNode.Collapsed += SyncTreeNodes;
-
-            rootNode.Header = new TextBlock
-            {
-                Text = headerText,
-                Foreground = new System.Windows.Media.SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString(colorHex)),
-                FontFamily = new System.Windows.Media.FontFamily("Consolas"),
-                FontWeight = FontWeights.Bold,
-                VerticalAlignment = VerticalAlignment.Center,
-                Margin = new Thickness(0, 4, 0, 4)
-            };
-
-            var outerList = new TreeViewItem { Header = "[List]", IsExpanded = true, Focusable = false };
-            outerList.Items.Add(CreateXmlTagRow("OBJSPEC", ev.OBJSPEC ?? ""));
-            outerList.Items.Add(CreateXmlTagRow("OBJTYPE", ev.OBJTYPE ?? ""));
-
-            var attrList = new TreeViewItem { Header = "[List]", IsExpanded = true, Focusable = false };
-
-            var l1 = new TreeViewItem { Header = "[List]", IsExpanded = true, Focusable = false };
-            l1.Items.Add(CreateXmlTagRow("ATTRID", "ObjID"));
-            l1.Items.Add(CreateXmlTagRow("ATTRDATA", ev.ObjID ?? ""));
-
-            var l2 = new TreeViewItem { Header = "[List]", IsExpanded = true, Focusable = false };
-            l2.Items.Add(CreateXmlTagRow("ATTRID", "ProcessOrderMgmt"));
-            l2.Items.Add(CreateXmlTagRow("ATTRDATA", ev.ProcessOrderMgmt ?? ""));
-
-            var l3 = new TreeViewItem { Header = "[List]", IsExpanded = true, Focusable = false };
-            l3.Items.Add(CreateXmlTagRow("ATTRID", "StartMethod"));
-            l3.Items.Add(CreateXmlTagRow("ATTRDATA", ev.StartMethod ?? ""));
-
-            attrList.Items.Add(l1);
-            attrList.Items.Add(l2);
-            attrList.Items.Add(l3);
-
-            outerList.Items.Add(attrList);
-            rootNode.Items.Add(outerList);
-
-            return rootNode;
-        }
-
-        //private TreeViewItem CreateReadOnlyS4F17Node(LogEvent ev, string colorHex)
+        //private TreeViewItem CreateXmlTagRow(string tagName, string value)
         //{
-        //    string headerText = $"S4F17_{ev.SpoolID}";
+        //    var rowItem = new TreeViewItem { IsExpanded = false, Tag = "TagLeaf" };
+        //    var panel = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 2, 0, 2), Background = System.Windows.Media.Brushes.Transparent };
 
-        //    var rootNode = new TreeViewItem { IsExpanded = false, Focusable = false };
-        //    rootNode.Expanded += SyncTreeNodes;
-        //    rootNode.Collapsed += SyncTreeNodes;
-
-        //    rootNode.Header = new TextBlock
+        //    panel.Children.Add(new TextBlock
         //    {
-        //        Text = headerText,
-        //        Foreground = new System.Windows.Media.SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString(colorHex)),
-        //        FontFamily = new System.Windows.Media.FontFamily("Consolas"),
-        //        FontWeight = FontWeights.Bold,
+        //        Text = tagName,
+        //        Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0xAB, 0xB2, 0xBF)),
         //        VerticalAlignment = VerticalAlignment.Center,
-        //        Margin = new Thickness(0, 4, 0, 4)
+        //        FontFamily = new System.Windows.Media.FontFamily("Consolas"),
+        //        FontSize = 14,
+        //        FontWeight = FontWeights.Bold
+        //    });
+
+        //    panel.Children.Add(new TextBlock
+        //    {
+        //        Text = $" [{value}]",
+        //        Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0x98, 0xC3, 0x79)),
+        //        VerticalAlignment = VerticalAlignment.Center,
+        //        Margin = new Thickness(10, 0, 0, 0),
+        //        FontFamily = new System.Windows.Media.FontFamily("Consolas"),
+        //        FontSize = 14,
+        //        FontWeight = FontWeights.Bold
+        //    });
+
+        //    rowItem.Header = panel;
+
+        //    rowItem.MouseDoubleClick += (s, e) =>
+        //    {
+        //        if (!rowItem.IsSelected) return;
+        //        e.Handled = true;
+
+        //        var currentName = ((TextBlock)panel.Children[0]).Text.Trim();
+        //        var currentVal = ((TextBlock)panel.Children[1]).Text.Replace("[", "").Replace("]", "").Trim();
+
+        //        var dlg = new ItemDialog(currentName, currentVal) { Owner = this };
+        //        if (dlg.ShowDialog() == true)
+        //        {
+        //            ((TextBlock)panel.Children[0]).Text = dlg.ItemName.Replace(" ", "_").Replace("(", "_").Replace(")", "_");
+        //            ((TextBlock)panel.Children[1]).Text = $" [{dlg.ItemValue}]";
+        //        }
         //    };
 
-        //    var outerList = new TreeViewItem { Header = "[List]", IsExpanded = false, Focusable = false };
-        //    outerList.Items.Add(CreateXmlTagRow("Spool_ID", ev.SpoolID ?? "0"));
-
-        //    rootNode.Items.Add(outerList);
-        //    return rootNode;
+        //    return rowItem;
         //}
-
-
 
         private string ExtractTagValue(TreeViewItem item)
         {
@@ -434,9 +390,11 @@ namespace LOG_EZ
         }
 
 
-        
         // ==========================================
-        // THE ANALYSIS ENGINE 
+        // THE ANALYSIS ENGINE (UNIFIED & SMART)
+        // ==========================================
+        // ==========================================
+        // THE ANALYSIS ENGINE (100% C# - C++ BYPASSED)
         // ==========================================
         private void OnAnalyseRunClick(object sender, RoutedEventArgs e)
         {
@@ -447,8 +405,6 @@ namespace LOG_EZ
 
             string seqTag = ((ComboBoxItem)AnalysisSequenceComboBox.SelectedItem).Tag.ToString();
             XDocument seqDoc = XDocument.Load(filePath);
-            string tempS16DataID = "", tempS16Action = "", tempS16ID = "";
-
 
             // 1. POPULATE EXPECTED SEQUENCE DIRECTLY FROM XML
             foreach (var node in seqDoc.Root?.Element(seqTag)?.Elements() ?? Enumerable.Empty<XElement>())
@@ -479,27 +435,15 @@ namespace LOG_EZ
                     };
                     tvNode = CreateReadOnlyS3F17Node(ev, "#ABB2BF");
                 }
-                else if (msgType == "S14F9")
+                else if (msgType == "S4F17")
                 {
-                    // Find all the ATTRDATA values in the XML list
-                    var attrDataNodes = node.Descendants("ATTRDATA").ToList();
-
                     var ev = new LogEvent
                     {
-                        Protocol = "S14F9",
-                        OBJSPEC = node.Descendants("OBJSPEC").FirstOrDefault()?.Value?.Trim() ?? "",
-                        OBJTYPE = node.Descendants("OBJTYPE").FirstOrDefault()?.Value?.Trim() ?? "",
-
-                        // Map the list values strictly by their order!
-                        ObjID = attrDataNodes.Count > 0 ? attrDataNodes[0].Value?.Trim() : "",
-                        ProcessOrderMgmt = attrDataNodes.Count > 1 ? attrDataNodes[1].Value?.Trim() : "",
-                        StartMethod = attrDataNodes.Count > 2 ? attrDataNodes[2].Value?.Trim() : ""
+                        Protocol = "S4F17",
+                        SpoolID = node.Descendants("Spool_ID").FirstOrDefault()?.Value?.Trim() ?? ""
                     };
-                    tvNode = CreateReadOnlyS14F9Node(ev, "#ABB2BF");
+                    tvNode = CreateReadOnlyS4F17Node(ev, "#ABB2BF");
                 }
-
-                
-                
 
                 if (tvNode != null) ExpectedSequenceTree.Items.Add(tvNode);
             }
@@ -512,9 +456,7 @@ namespace LOG_EZ
             string currentMsgType = "";
             int valueCount = 0;
             string tempDataID = "", tempCEID = "", tempS3DataID = "", tempCarrierAction = "", tempCarrierID = "";
-            
             DateTime currentTime = DateTime.MinValue;
-            string tempObjSpec = "", tempObjType = "", tempObjID = "", tempPOM = "", tempStart = "";
 
             foreach (string line in File.ReadLines(LogPathTextBox.Text))
             {
@@ -528,11 +470,7 @@ namespace LOG_EZ
 
                 if (line.Contains("S6F11") && !line.Contains("S6F11_")) { capturingMsg = true; currentMsgType = "S6F11"; valueCount = 0; tempDataID = ""; tempCEID = ""; }
                 else if (line.Contains("S3F17") && !line.Contains("S3F17_")) { capturingMsg = true; currentMsgType = "S3F17"; valueCount = 0; tempS3DataID = ""; tempCarrierAction = ""; tempCarrierID = ""; }
-                else if (line.Contains("S14F9") && !line.Contains("S14F9_"))
-                {
-                    capturingMsg = true; currentMsgType = "S14F9"; valueCount = 0;
-                    tempObjSpec = ""; tempObjType = ""; tempObjID = ""; tempPOM = ""; tempStart = ""; 
-                }
+                else if (line.Contains("S4F17") && !line.Contains("S4F17_")) { capturingMsg = true; currentMsgType = "S4F17"; valueCount = 0; }
                 else if (capturingMsg && (line.Contains("<U") || line.Contains("<I") || line.Contains("<A")))
                 {
                     valueCount++;
@@ -572,28 +510,12 @@ namespace LOG_EZ
                             capturingMsg = false;
                         }
                     }
-                    else if (currentMsgType == "S14F9")
+                    else if (currentMsgType == "S4F17")
                     {
-                        if (valueCount == 1) tempObjSpec = extractedValue; // Equipment
-                        else if (valueCount == 2) tempObjType = extractedValue; // ControlJob
-                        else if (valueCount == 4) tempObjID = extractedValue; // ObjID Value (Skips label)
-                        else if (valueCount == 6) tempPOM = extractedValue; // ProcessOrderMgmt Value
-                        else if (valueCount == 8)
+                        if (valueCount == 1)
                         {
-                            tempStart = extractedValue; // StartMethod Value
-                            actualNode = CreateReadOnlyS14F9Node(new LogEvent { Protocol = "S14F9", OBJSPEC = tempObjSpec, OBJTYPE = tempObjType, ObjID = tempObjID, ProcessOrderMgmt = tempPOM, StartMethod = tempStart, Timestamp = currentTime.ToString("HH:mm:ss") }, "#ABB2BF");
+                            actualNode = CreateReadOnlyS4F17Node(new LogEvent { Protocol = "S4F17", SpoolID = extractedValue, Timestamp = currentTime.ToString("HH:mm:ss") }, "#ABB2BF");
                             capturingMsg = false;
-                        }
-                    }
-                    else if (currentMsgType == "S16F15")
-                    {
-                        if (valueCount == 1) tempS16DataID = extractedValue;
-                        else if (valueCount == 2) tempS16ID = extractedValue;
-                        else if (valueCount == 3)
-                        {
-                            tempS16Action = extractedValue;
-                            actualNode = CreateReadOnlyS16F15Node(new LogEvent { Protocol = "S16F15", S16DataID = tempS16DataID, S16ID = tempS16ID, S16Action = tempS16Action, Timestamp = currentTime.ToString("HH:mm:ss") }, "#ABB2BF");
-                            capturingMsg = false; // Short-circuit!
                         }
                     }
 
@@ -792,7 +714,19 @@ namespace LOG_EZ
                     }
                 }
 
-                
+                //if (x > 0 && (y == 0 || dp[x - 1, y] >= dp[x, y - 1]))
+                //{
+                //    alignedExp.Push(expNodes[x - 1]);
+                //    alignedAct.Push(CreateBlankNode()); // <-- Back to blanks!
+                //    x--;
+                //}
+                //else
+                //{
+                //    alignedExp.Push(CreateBlankNode()); // <-- Back to blanks!
+                //    alignedAct.Push(actNodes[y - 1]);
+                //    y--;
+                //}
+                // ... inside the while loop in SmartAlignTrees()
                 if (x > 0 && (y == 0 || dp[x - 1, y] >= dp[x, y - 1]))
                 {
                     alignedExp.Push(expNodes[x - 1]);
@@ -828,7 +762,9 @@ namespace LOG_EZ
             var allEvents = SdrLogParser.ParseLog(LogPathTextBox.Text, applyTimeFilter, filterStart, filterEnd);
             var filteredEvents = allEvents.AsEnumerable();
 
-            if (!showAllData) filteredEvents = filteredEvents.Where(ev => ev.Protocol == "S6F11" || ev.Protocol == "S3F17" || ev.Protocol == "S14F9" || ev.Protocol == "S16F15");
+            if (!showAllData) filteredEvents = filteredEvents.Where(ev => ev.Protocol == "S6F11" || ev.Protocol == "S3F17");
+            //|| ev.Protocol == "S4F17"
+
             if (!string.IsNullOrEmpty(searchValue))
             {
                 if (searchType == "DATA ID") filteredEvents = filteredEvents.Where(ev => ev.DataID == searchValue);
@@ -858,7 +794,7 @@ namespace LOG_EZ
                 Background = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(30, 34, 42)),
                 ResizeMode = ResizeMode.NoResize
             };
-            string tempS16DataID = "", tempS16Action = "", tempS16ID = "";
+
             StackPanel mainPanel = new StackPanel { Margin = new Thickness(20) };
 
             TextBlock title1 = new TextBlock { Text = "1. UPLOAD SDR LOG", Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(97, 175, 239)), FontWeight = FontWeights.Bold, Margin = new Thickness(0, 0, 0, 5) };
@@ -962,8 +898,6 @@ namespace LOG_EZ
                 string tempDataID = "", tempCEID = "", tempS3DataID = "", tempCarrierAction = "", tempCarrierID = "";
 
                 DateTime currentTime = DateTime.MinValue;
-                string tempObjSpec = "", tempObjType = "", tempObjID = "", tempPOM = "", tempStart = "";
-                string temp1415Spec = "", temp1415Type = "", temp1415Action = "";
 
                 foreach (string line in File.ReadLines(txtFile.Text))
                 {
@@ -990,10 +924,11 @@ namespace LOG_EZ
                         currentMsgType = "S3F17";
                         valueCount = 0;
                     }
-                    else if (line.Contains("S14F9") && !line.Contains("S14F9_"))
+                    else if (line.Contains("S4F17") && !line.Contains("S4F17_"))
                     {
-                        capturingMsg = true; currentMsgType = "S14F9"; valueCount = 0;
-                        tempObjSpec = ""; tempObjType = ""; tempObjID = ""; tempPOM = ""; tempStart = ""; // <-- Clear old data! // <-- Clear old data!
+                        capturingMsg = true;
+                        currentMsgType = "S4F17";
+                        valueCount = 0;
                     }
                     else if (capturingMsg && (line.Contains("<U") || line.Contains("<I") || line.Contains("<A")))
                     {
@@ -1034,30 +969,14 @@ namespace LOG_EZ
                                 capturingMsg = false;
                             }
                         }
-                        else if (currentMsgType == "S14F9")
+                        else if (currentMsgType == "S4F17")
                         {
-                            if (valueCount == 1) tempObjSpec = extractedValue;
-                            else if (valueCount == 2) tempObjType = extractedValue;
-                            else if (valueCount == 4) tempObjID = extractedValue;
-                            else if (valueCount == 6) tempPOM = extractedValue;
-                            else if (valueCount == 8)
+                            if (valueCount == 1)
                             {
-                                tempStart = extractedValue;
-                                targetEvents.Add(new LogEvent { Protocol = "S14F9", OBJSPEC = tempObjSpec, OBJTYPE = tempObjType, ObjID = tempObjID, ProcessOrderMgmt = tempPOM, StartMethod = tempStart });
+                                targetEvents.Add(new LogEvent { Protocol = "S4F17", SpoolID = extractedValue });
                                 capturingMsg = false;
                             }
                         }
-                        /*else if (currentMsgType == "S14F15")
-                        {
-                            if (valueCount == 1) temp1415Spec = extractedValue;
-                            else if (valueCount == 2) temp1415Type = extractedValue;
-                            else if (valueCount == 3)
-                            {
-                                temp1415Action = extractedValue;
-                                targetEvents.Add(new LogEvent { Protocol = "S14F15", S14F15_ObjSpec = temp1415Spec, S14F15_ObjType = temp1415Type, S14F15_Action = temp1415Action });
-                                capturingMsg = false; // Short-circuit!
-                            }
-                        }*/
                     }
                 }
 
@@ -1126,31 +1045,10 @@ namespace LOG_EZ
                             outerList.Add(innerList3);
                             break;
 
-                        case "S14F9":
-                            msgNode.SetAttributeValue("NAME", parsedEv.OBJTYPE ?? "CreateObject");
-                            outerList.Add(new XElement("OBJSPEC", parsedEv.OBJSPEC ?? ""));
-                            outerList.Add(new XElement("OBJTYPE", parsedEv.OBJTYPE ?? ""));
-
-                            XElement attrListXml = new XElement("List");
-
-                            XElement l1Xml = new XElement("List");
-                            l1Xml.Add(new XElement("ATTRID", "ObjID"));
-                            l1Xml.Add(new XElement("ATTRDATA", parsedEv.ObjID ?? ""));
-                            attrListXml.Add(l1Xml);
-
-                            XElement l2Xml = new XElement("List");
-                            l2Xml.Add(new XElement("ATTRID", "ProcessOrderMgmt"));
-                            l2Xml.Add(new XElement("ATTRDATA", parsedEv.ProcessOrderMgmt ?? ""));
-                            attrListXml.Add(l2Xml);
-
-                            XElement l3Xml = new XElement("List");
-                            l3Xml.Add(new XElement("ATTRID", "StartMethod"));
-                            l3Xml.Add(new XElement("ATTRDATA", parsedEv.StartMethod ?? ""));
-                            attrListXml.Add(l3Xml);
-
-                            outerList.Add(attrListXml);
+                        case "S4F17":
+                            msgNode.SetAttributeValue("NAME", parsedEv.SpoolID);
+                            outerList.Add(new XElement("Spool_ID", parsedEv.SpoolID));
                             break;
-
                     }
 
                     msgNode.Add(outerList);
@@ -1209,136 +1107,21 @@ namespace LOG_EZ
             var list_3_S3F17 = new TreeViewItem { Header = "[List]", IsExpanded = true };
             list_3_S3F17.Items.Add(new TreeViewItem { Header = "ATTRID", IsExpanded = true });
             list_3_S3F17.Items.Add(new TreeViewItem { Header = "ATTRDATA", IsExpanded = true });
-
             list_2_S3F17.Items.Add(list_3_S3F17);
             list_S3F17.Items.Add(list_2_S3F17);
             s3f17.Items.Add(list_S3F17);
             root.Items.Add(s3f17);
 
-            
-            // --- S14F9 ---
-            var s14f9 = new TreeViewItem { Header = "S14F9", IsExpanded = false };
-            var list_S14F9 = new TreeViewItem { Header = "[List]", IsExpanded = true };
-            list_S14F9.Items.Add(new TreeViewItem { Header = "OBJSPEC", IsExpanded = true });
-            list_S14F9.Items.Add(new TreeViewItem { Header = "OBJTYPE", IsExpanded = true });
-
-            var attrList = new TreeViewItem { Header = "[List]", IsExpanded = true };
-
-            var list_ObjID = new TreeViewItem { Header = "[List]", IsExpanded = true, Focusable = false };
-            list_ObjID.Items.Add(new TreeViewItem { Header = "ATTRID", IsExpanded = true });
-            list_ObjID.Items.Add(new TreeViewItem { Header = "ObjID", IsExpanded = true });
-
-            var list_POM = new TreeViewItem { Header = "[List]", IsExpanded = true, Focusable = false };
-            list_POM.Items.Add(new TreeViewItem { Header = "ATTRID", IsExpanded = true });
-            list_POM.Items.Add(new TreeViewItem { Header = "ProcessOrderMgmt", IsExpanded = true });
-
-            var list_Start = new TreeViewItem { Header = "[List]", IsExpanded = true, Focusable = false };
-            list_Start.Items.Add(new TreeViewItem { Header = "ATTRID", IsExpanded = true });
-            list_Start.Items.Add(new TreeViewItem { Header = "StartMethod", IsExpanded = true });
-
-            attrList.Items.Add(list_ObjID);
-            attrList.Items.Add(list_POM);
-            attrList.Items.Add(list_Start);
-
-            list_S14F9.Items.Add(attrList);
-            s14f9.Items.Add(list_S14F9);
-            root.Items.Add(s14f9);
-            //ATTRID
-            // --- S16F15 ---
-            var s16f15 = new TreeViewItem { Header = "S16F15", IsExpanded = false };
-            var list_S16 = new TreeViewItem { Header = "[List]", IsExpanded = true };
-            list_S16.Items.Add(new TreeViewItem { Header = "DATAID", IsExpanded = true });
-            list_S16.Items.Add(new TreeViewItem { Header = "TARGET_ID", IsExpanded = true });
-            list_S16.Items.Add(new TreeViewItem { Header = "ACTION_NAME", IsExpanded = true });
-            s16f15.Items.Add(list_S16);
-            root.Items.Add(s16f15);
+            // --- S4F17 ---
+            var s4f17 = new TreeViewItem { Header = "S4F17", IsExpanded = false };
+            var list_S4F17 = new TreeViewItem { Header = "[List]", IsExpanded = true };
+            list_S4F17.Items.Add(new TreeViewItem { Header = "Spool_ID", IsExpanded = true });
+            s4f17.Items.Add(list_S4F17);
+            root.Items.Add(s4f17);
 
             TreeView2.Items.Add(root);
-            //    var outerList = new TreeViewItem { Header = "[List]", IsExpanded = false, Focusable = false };
-            //    outerList.Items.Add(CreateXmlTagRow("OBJSPEC", ev.OBJSPEC ?? "0"));
-
-
-            //    var innerList11 = new TreeViewItem { Header = "[List]", IsExpanded = false, Focusable = false };
-            //    var innerList22 = new TreeViewItem { Header = "[List]", IsExpanded = false, Focusable = false };
-            //    innerList22.Items.Add(CreateXmlTagRow("ATTRID", ev.AttrID2 ?? "-"));
-            //    innerList22.Items.Add(CreateXmlTagRow("ATTRDATA", ev.AttrData2 ?? "-"));
-
-            //    innerList11.Items.Add(innerList22);
-            //    outerList.Items.Add(innerList11);
-            //    rootNode.Items.Add(outerList);
-
-            //    return rootNode;
-            //
-        }
-        // ==========================================
-        // CEID DICTIONARY MANAGER
-        // ==========================================
-
-        // 1. A simple class to hold your data
-        // ==========================================
-        // CEID DICTIONARY MANAGER
-        // ==========================================
-
-        // 1. A simple class to hold your data
-        // ==========================================
-        // CEID DICTIONARY MANAGER
-        // ==========================================
-
-        public class CeidDef
-        {
-            public string ID { get; set; }
-            public string Name { get; set; }
         }
 
-        private System.Collections.ObjectModel.ObservableCollection<CeidDef> ceidList;
-        private string ceidFilePath = "ceid_dictionary.json";
-
-        private void BtnCeidDict_Click(object sender, RoutedEventArgs e)
-        {
-            // Load the file if it exists, otherwise create a fresh empty list
-            if (System.IO.File.Exists(ceidFilePath))
-            {
-                string json = System.IO.File.ReadAllText(ceidFilePath);
-                ceidList = JsonSerializer.Deserialize<System.Collections.ObjectModel.ObservableCollection<CeidDef>>(json) ?? new System.Collections.ObjectModel.ObservableCollection<CeidDef>();
-            }
-            else
-            {
-                ceidList = new System.Collections.ObjectModel.ObservableCollection<CeidDef>();
-            }
-
-            CeidDataGrid.ItemsSource = ceidList;
-            CeidModal.Visibility = Visibility.Visible;
-        }
-
-        // 🌟 NEW METHOD: Instantly adds a blank row for the user to type in
-        private void BtnAddCeidRow_Click(object sender, RoutedEventArgs e)
-        {
-            if (ceidList == null) ceidList = new System.Collections.ObjectModel.ObservableCollection<CeidDef>();
-
-            ceidList.Add(new CeidDef { ID = "", Name = "" });
-            CeidDataGrid.Items.Refresh(); // Force the UI to show the new row
-        }
-
-        private void BtnCloseCeidModal_Click(object sender, RoutedEventArgs e)
-        {
-            CeidModal.Visibility = Visibility.Collapsed;
-        }
-
-        private void BtnSaveCeids_Click(object sender, RoutedEventArgs e)
-        {
-            try
-            {
-                string json = JsonSerializer.Serialize(ceidList, new JsonSerializerOptions { WriteIndented = true });
-                System.IO.File.WriteAllText(ceidFilePath, json);
-
-                MessageBox.Show("CEID Dictionary Saved Successfully!", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
-                CeidModal.Visibility = Visibility.Collapsed;
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Error saving dictionary: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-        }
         private void TreeView2_SelectedItemChanged(object sender, RoutedPropertyChangedEventArgs<object> e)
         {
             var selectedPalette = TreeView2.SelectedItem as TreeViewItem;
@@ -1595,13 +1378,14 @@ namespace LOG_EZ
 
             ComboBox cmbAction = new ComboBox { Height = 30, IsEditable = true, Margin = new Thickness(0, 0, 0, 25) };
 
-            // Populate with standard values 
-            cmbAction.Items.Add("ProceedWithCarrier"); // From log 
-            cmbAction.Items.Add("CarrierRelease");     // From log 
-            cmbAction.Items.Add("CANCEL_BIND");
-            cmbAction.Items.Add("PROCEED_WITH_CARRIER");
-            cmbAction.Items.Add("CANCEL_CARRIER_AT_PORT");
-            cmbAction.Items.Add("CANCEL_CARRIER_NOTIFICATION");
+            // Populate with standard values from documentation & logs
+            cmbAction.Items.Add("ProceedWithCarrier"); // From log screenshots
+            cmbAction.Items.Add("CarrierRelease");     // From log screenshots
+            cmbAction.Items.Add("1 (BIND)");
+            cmbAction.Items.Add("2 (CANCEL_BIND)");
+            cmbAction.Items.Add("3 (PROCEED_WITH_CARRIER)");
+            cmbAction.Items.Add("4 (CANCEL_CARRIER_AT_PORT)");
+            cmbAction.Items.Add("5 (CANCEL_CARRIER_NOTIFICATION)");
 
             // Set current text
             cmbAction.Text = currentVal;
@@ -1630,8 +1414,7 @@ namespace LOG_EZ
             AnalysisSequenceComboBox.Items.Clear();
             try
             {
-                if (!File.Exists(filePath))
-                    return;
+                if (!File.Exists(filePath)) return;
                 XDocument doc = XDocument.Load(filePath);
                 if (doc.Root != null)
                 {
@@ -1903,10 +1686,9 @@ namespace LOG_EZ
 
                 foreach (XElement node in cleanUpdatedBranch.Descendants().ToList())
                 {
-                    if (node.Name.LocalName.StartsWith("S6F11") || node.Name.LocalName.StartsWith("S3F17") || node.Name.LocalName.StartsWith("S14F9") || node.Name.LocalName.StartsWith("S16F15") || node.Name.LocalName.StartsWith("S4F17"))
+                    if (node.Name.LocalName.StartsWith("S6F11") || node.Name.LocalName.StartsWith("S3F17") || node.Name.LocalName.StartsWith("S4F17"))
                     {
-                        var idNode = node.Descendants("CEID").FirstOrDefault() ?? node.Descendants("CARRIERACTION").FirstOrDefault() ?? node.Descendants("OBJTYPE").FirstOrDefault() ?? node.Descendants("ACTION_NAME").FirstOrDefault() ?? node.Descendants("Spool_ID").FirstOrDefault();
-                        // ... rest of the code remains the same
+                        var idNode = node.Descendants("CEID").FirstOrDefault() ?? node.Descendants("CARRIERACTION").FirstOrDefault() ?? node.Descendants("Spool_ID").FirstOrDefault();
                         string idVal = idNode != null ? idNode.Value : "*";
 
                         string eventName = EventMapper.GetEventName(idVal);
@@ -2019,132 +1801,5 @@ namespace LOG_EZ
                 catch (Exception ex) { MessageBox.Show($"Error saving report: {ex.Message}", "Export Error", MessageBoxButton.OK, MessageBoxImage.Error); }
             }
         }
-            private void AddChatMessage(string sender, string message, string colorHex)
-        {
-            var bubble = new Border
-            {
-                Background = new System.Windows.Media.SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString(colorHex)),
-                CornerRadius = new CornerRadius(8),
-                Padding = new Thickness(10),
-                Margin = new Thickness(0, 5, 0, 5),
-                HorizontalAlignment = sender == "You" ? HorizontalAlignment.Right : HorizontalAlignment.Left,
-                MaxWidth = 280
-            };
-
-            var text = new TextBlock
-            {
-                Text = message,
-                Foreground = System.Windows.Media.Brushes.White,
-                TextWrapping = TextWrapping.Wrap
-            };
-
-            bubble.Child = text;
-            AiChatHistoryPanel.Children.Add(bubble);
-            AiChatScroller.ScrollToBottom();
-        }
-
-        private async void BtnSendAi_Click(object sender, RoutedEventArgs e)
-        {
-            string prompt = AiInputBox.Text.Trim();
-            if (string.IsNullOrEmpty(prompt)) return;
-
-            // 1. Show user message (Blue bubble)
-            AddChatMessage("You", prompt, "#2A4D69");
-            AiInputBox.Clear();
-
-            // 2. Add a temporary "Thinking..." message
-            AddChatMessage("AI", "Thinking...", "#3E4451");
-
-            // 3. Call the AI Engine (We will build this next!)
-            string aiResponse = await AskLLM(prompt);
-
-            // 4. Remove "Thinking..." and show real response (Greenish bubble)
-            AiChatHistoryPanel.Children.RemoveAt(AiChatHistoryPanel.Children.Count - 1);
-            AddChatMessage("AI", aiResponse, "#1E3B33");
-        }
-
-        private void AiInputBox_KeyDown(object sender, KeyEventArgs e)
-        {
-            if (e.Key == Key.Enter) BtnSendAi_Click(null, null);
-        }
-        // ... your existing BtnSendAi_Click method is up here ...
-
-        // ==========================================
-        // AI INTEGRATION ENGINE
-        // ==========================================
-        private static readonly HttpClient aiClient = new HttpClient();
-        private void BtnToggleAi_Click(object sender, RoutedEventArgs e)
-        {
-            // If the sidebar is visible, hide it. If it's hidden, show it!
-            if (AiSidebar != null)
-            {
-                if (AiSidebar.Visibility == Visibility.Visible)
-                {
-                    AiSidebar.Visibility = Visibility.Collapsed;
-                }
-                else
-                {
-                    AiSidebar.Visibility = Visibility.Visible;
-                }
-            }
-        }
-
-        private async Task<string> AskLLM(string userMessage)
-        {
-       
-
-            // TO THIS (Keep the quotes!):
-            string apiKey = "AQ.Ab8RN6IQk3cA6z7FzvQnSJWnziHb1VCHGOqklni5JiRxo1sIyw";
-            string endpoint = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent?key={apiKey}"; 
-
-            // We secretly inject the LOG_EZ context so the AI knows what its job is!
-            string systemContext = "You are the LOG_EZ Assistant, an expert in SECS/GEM semiconductor logs. " +
-                                   "Answer the user's question clearly and concisely.";
-
-            string fullPrompt = $"{systemContext}\n\nUser: {userMessage}";
-
-            var requestBody = new
-            {
-                contents = new[]
-                {
-                    new { parts = new[] { new { text = fullPrompt } } }
-                }
-            };
-
-            try
-            {
-                string jsonPayload = JsonSerializer.Serialize(requestBody);
-                var content = new StringContent(jsonPayload, Encoding.UTF8, "application/json");
-
-                HttpResponseMessage response = await aiClient.PostAsync(endpoint, content);
-                string responseJson = await response.Content.ReadAsStringAsync();
-
-                if (response.IsSuccessStatusCode)
-                {
-                    // Parse the JSON to grab just the text response
-                    using (JsonDocument doc = JsonDocument.Parse(responseJson))
-                    {
-                        var textElement = doc.RootElement
-                            .GetProperty("candidates")[0]
-                            .GetProperty("content")
-                            .GetProperty("parts")[0]
-                            .GetProperty("text");
-                        return textElement.GetString().Trim();
-                    }
-                }
-                else
-                {
-                    // 🌟 THIS IS THE NEW PART: We grab the raw error message from Google and display it!
-                    return $"Status: {response.StatusCode}\nDetails: {responseJson}";
-                }
-               
-            }
-            catch (Exception ex)
-            {
-                return $"Connection Error: {ex.Message}";
-            }
-        }
-
     }
-    
 }
