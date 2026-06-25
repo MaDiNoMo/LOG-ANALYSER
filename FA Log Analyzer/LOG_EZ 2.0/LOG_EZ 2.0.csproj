@@ -36,4 +36,10 @@
 	<ItemGroup>
 	  <Folder Include="NewFolder\" />
 	</ItemGroup>
+
+	<ItemGroup>
+	  <None Update="secrets.txt">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </None>
+	</ItemGroup>
 </Project>

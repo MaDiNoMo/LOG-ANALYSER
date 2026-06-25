@@ -1,20 +1,19 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
 using System.Runtime.InteropServices;
 
 namespace LOG_EZ
 {
-    public static class SdrEngine
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
+    public struct EventData
     {
-        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-        public delegate void ResultCallback(bool isExpectedTree, string timestamp, string dataID, string ceid, string reportID, string colorHex);
-
-        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-        public delegate void SummaryCallback(int perfectMatches, int totalExpected, int extraMessages);
-
-        [DllImport(@"C:\Users\ArJuN\source\repos\SdrParserEngine\x64\Release\SdrParserEngine.dll", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern void CompareLogSequence(string filePath, string startTime, string endTime, string expectedListStr, ResultCallback itemCallback, SummaryCallback summaryCallback);
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 32)] public string Timestamp;
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 16)] public string Protocol;
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 32)] public string P1;
+        [MarshalAs(UnmanagedType.LPStr)] public string P2; // For longer strings
+        [MarshalAs(UnmanagedType.LPStr)] public string P3;
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 8)] public string ColorHex;
     }
+
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public delegate void ResultCallback(int isExpectedTree, EventData data);
 }

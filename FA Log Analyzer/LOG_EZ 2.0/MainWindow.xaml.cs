@@ -1,12 +1,13 @@
 ﻿using Microsoft.Win32;
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Xml.Linq;
-using System.Collections.Generic;
-using System;
-using System.Linq;
 
 namespace LOG_EZ
 {
@@ -40,8 +41,34 @@ namespace LOG_EZ
             public string AttrID { get; set; }
             public string AttrData { get; set; }
 
-            // S4F17 Properties
-            public string SpoolID { get; set; }
+            // S14F9 / S16F15 Properties
+            public string OBJSPEC { get; set; }
+            public string OBJTYPE { get; set; }
+            public string ObjID { get; set; }
+            public string ProcessOrderMgmt { get; set; }
+            public string StartMethod { get; set; }
+            public string S16DataID { get; set; }
+            public string S16ID { get; set; }
+            public string S16Action { get; set; }
+
+            //// S4F17 Properties
+            //public string SpoolID { get; set; }
+            public string DisplayDetails
+            {
+                get
+                {
+                    // .Trim() destroys hidden spaces from the text file!
+                    string p = Protocol?.Trim();
+
+                    if (p == "S6F11") return $"CEID: {CEID} | ReportID: {ReportID} | DataID: {DataID}";
+                    if (p == "S3F17") return $"Action: {CarrierAction} | Carrier: {CarrierID} | Port: {PortID}";
+                    if (p == "S14F9") return $"ObjID: {ObjID} | Type: {OBJTYPE} | Spec: {OBJSPEC}";
+                    if (p == "S16F15") return $"Action: {S16Action} | Target: {S16ID} | DataID: {S16DataID}";
+
+                    // If it doesn't match anything, force it to show us exactly what protocol it thinks it is!
+                    return $"Unmapped Protocol: [{Protocol}]";
+                }
+            }
         }
 
         public MainWindow()
@@ -49,7 +76,6 @@ namespace LOG_EZ
             InitializeComponent();
             if (TreeView1 != null) TreeView1.ContextMenu = null;
 
-            // Failsafe in case EVENTS.txt doesn't exist on another computer
             try { EventMapper.LoadEventMapping(@"C:\Users\ArJuN\OneDrive\Documents\project phase 1\EVENTS.txt"); } catch { }
 
             InitializeSecsPalette();
@@ -205,11 +231,11 @@ namespace LOG_EZ
             };
             return rootNode;
         }
+
         private TreeViewItem CreateGhostNode(TreeViewItem sourceNode)
         {
             if (sourceNode == null) return new TreeViewItem();
 
-            // 🌟 Set Opacity to 0.4 to make the entire node and its colors faded/light!
             var ghost = new TreeViewItem { IsExpanded = sourceNode.IsExpanded, Focusable = false, Tag = "GhostNode", Opacity = 0.4 };
 
             if (sourceNode.Header is StackPanel originalPanel)
@@ -305,76 +331,32 @@ namespace LOG_EZ
             return rootNode;
         }
 
-        private TreeViewItem CreateReadOnlyS4F17Node(LogEvent ev, string colorHex)
-        {
-            string headerText = $"S4F17_{ev.SpoolID}";
+        
 
-            var rootNode = new TreeViewItem { IsExpanded = false, Focusable = false };
-            rootNode.Expanded += SyncTreeNodes;
-            rootNode.Collapsed += SyncTreeNodes;
-
-            rootNode.Header = new TextBlock
-            {
-                Text = headerText,
-                Foreground = new System.Windows.Media.SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString(colorHex)),
-                FontFamily = new System.Windows.Media.FontFamily("Consolas"),
-                FontWeight = FontWeights.Bold,
-                VerticalAlignment = VerticalAlignment.Center,
-                Margin = new Thickness(0, 4, 0, 4)
-            };
-
-            var outerList = new TreeViewItem { Header = "[List]", IsExpanded = false, Focusable = false };
-            outerList.Items.Add(CreateXmlTagRow("Spool_ID", ev.SpoolID ?? "0"));
-
-            rootNode.Items.Add(outerList);
-            return rootNode;
-        }
-
-        //private TreeViewItem CreateXmlTagRow(string tagName, string value)
+       
+        //private TreeViewItem CreateReadOnlyS4F17Node(LogEvent ev, string colorHex)
         //{
-        //    var rowItem = new TreeViewItem { IsExpanded = false, Tag = "TagLeaf" };
-        //    var panel = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 2, 0, 2), Background = System.Windows.Media.Brushes.Transparent };
+        //    string headerText = $"S4F17_{ev.SpoolID}";
 
-        //    panel.Children.Add(new TextBlock
+        //    var rootNode = new TreeViewItem { IsExpanded = false, Focusable = false };
+        //    rootNode.Expanded += SyncTreeNodes;
+        //    rootNode.Collapsed += SyncTreeNodes;
+
+        //    rootNode.Header = new TextBlock
         //    {
-        //        Text = tagName,
-        //        Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0xAB, 0xB2, 0xBF)),
-        //        VerticalAlignment = VerticalAlignment.Center,
+        //        Text = headerText,
+        //        Foreground = new System.Windows.Media.SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString(colorHex)),
         //        FontFamily = new System.Windows.Media.FontFamily("Consolas"),
-        //        FontSize = 14,
-        //        FontWeight = FontWeights.Bold
-        //    });
-
-        //    panel.Children.Add(new TextBlock
-        //    {
-        //        Text = $" [{value}]",
-        //        Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0x98, 0xC3, 0x79)),
+        //        FontWeight = FontWeights.Bold,
         //        VerticalAlignment = VerticalAlignment.Center,
-        //        Margin = new Thickness(10, 0, 0, 0),
-        //        FontFamily = new System.Windows.Media.FontFamily("Consolas"),
-        //        FontSize = 14,
-        //        FontWeight = FontWeights.Bold
-        //    });
-
-        //    rowItem.Header = panel;
-
-        //    rowItem.MouseDoubleClick += (s, e) =>
-        //    {
-        //        if (!rowItem.IsSelected) return;
-        //        e.Handled = true;
-
-        //        var currentName = ((TextBlock)panel.Children[0]).Text.Trim();
-        //        var currentVal = ((TextBlock)panel.Children[1]).Text.Replace("[", "").Replace("]", "").Trim();
-
-        //        var dlg = new ItemDialog(currentName, currentVal) { Owner = this };
-        //        if (dlg.ShowDialog() == true)
-        //        {
-        //            ((TextBlock)panel.Children[0]).Text = dlg.ItemName.Replace(" ", "_").Replace("(", "_").Replace(")", "_");
-        //            ((TextBlock)panel.Children[1]).Text = $" [{dlg.ItemValue}]";
-        //        }
+        //        Margin = new Thickness(0, 4, 0, 4)
         //    };
 
-        //    return rowItem;
+        //    var outerList = new TreeViewItem { Header = "[List]", IsExpanded = false, Focusable = false };
+        //    outerList.Items.Add(CreateXmlTagRow("Spool_ID", ev.SpoolID ?? "0"));
+
+        //    rootNode.Items.Add(outerList);
+        //    return rootNode;
         //}
 
         private string ExtractTagValue(TreeViewItem item)
@@ -391,10 +373,7 @@ namespace LOG_EZ
 
 
         // ==========================================
-        // THE ANALYSIS ENGINE (UNIFIED & SMART)
-        // ==========================================
-        // ==========================================
-        // THE ANALYSIS ENGINE (100% C# - C++ BYPASSED)
+        // THE ANALYSIS ENGINE (100% PURE C#)
         // ==========================================
         private void OnAnalyseRunClick(object sender, RoutedEventArgs e)
         {
@@ -435,20 +414,43 @@ namespace LOG_EZ
                     };
                     tvNode = CreateReadOnlyS3F17Node(ev, "#ABB2BF");
                 }
-                else if (msgType == "S4F17")
+                else if (msgType == "S14F9")
                 {
+                    var attrDataNodes = node.Descendants("ATTRDATA").ToList();
                     var ev = new LogEvent
                     {
-                        Protocol = "S4F17",
-                        SpoolID = node.Descendants("Spool_ID").FirstOrDefault()?.Value?.Trim() ?? ""
+                        Protocol = "S14F9",
+                        OBJSPEC = node.Descendants("OBJSPEC").FirstOrDefault()?.Value?.Trim() ?? "",
+                        OBJTYPE = node.Descendants("OBJTYPE").FirstOrDefault()?.Value?.Trim() ?? "",
+                        ObjID = attrDataNodes.Count > 0 ? attrDataNodes[0].Value?.Trim() : ""
                     };
-                    tvNode = CreateReadOnlyS4F17Node(ev, "#ABB2BF");
+                    tvNode = CreateReadOnlyS14F9Node(ev, "#ABB2BF");
                 }
+                //else if (msgType == "S16F15")
+                //{
+                //    var ev = new LogEvent
+                //    {
+                //        Protocol = "S16F15",
+                //        S16DataID = node.Descendants("DATAID").FirstOrDefault()?.Value?.Trim() ?? "",
+                //        S16ID = node.Descendants("TARGET_ID").FirstOrDefault()?.Value?.Trim() ?? "",
+                //        S16Action = node.Descendants("ACTION_NAME").FirstOrDefault()?.Value?.Trim() ?? ""
+                //    };
+                //    tvNode = CreateReadOnlyS16F15Node(ev, "#ABB2BF");
+                //}
+                //else if (msgType == "S4F17")
+                //{
+                //    var ev = new LogEvent
+                //    {
+                //        Protocol = "S4F17",
+                //        SpoolID = node.Descendants("Spool_ID").FirstOrDefault()?.Value?.Trim() ?? ""
+                //    };
+                //    tvNode = CreateReadOnlyS4F17Node(ev, "#ABB2BF");
+                //}
 
                 if (tvNode != null) ExpectedSequenceTree.Items.Add(tvNode);
             }
 
-            // 2. POPULATE ACTUAL SEQUENCE DIRECTLY FROM LOG FILE (BYPASS C++ ENGINE ENTIRELY)
+            // 2. POPULATE ACTUAL SEQUENCE DIRECTLY FROM LOG FILE
             DateTime start = Tab2FilterRadio.IsChecked == true ? CombineDateTime(Tab2StartDate.SelectedDate, Tab2StartTime.Text, false) : DateTime.MinValue;
             DateTime end = Tab2FilterRadio.IsChecked == true ? CombineDateTime(Tab2EndDate.SelectedDate, Tab2EndTime.Text, true) : DateTime.MaxValue;
 
@@ -456,6 +458,8 @@ namespace LOG_EZ
             string currentMsgType = "";
             int valueCount = 0;
             string tempDataID = "", tempCEID = "", tempS3DataID = "", tempCarrierAction = "", tempCarrierID = "";
+            string tempObjSpec = "", tempObjType = "";
+            //string tempS16DataId = "", tempS16Id = "";
             DateTime currentTime = DateTime.MinValue;
 
             foreach (string line in File.ReadLines(LogPathTextBox.Text))
@@ -470,7 +474,9 @@ namespace LOG_EZ
 
                 if (line.Contains("S6F11") && !line.Contains("S6F11_")) { capturingMsg = true; currentMsgType = "S6F11"; valueCount = 0; tempDataID = ""; tempCEID = ""; }
                 else if (line.Contains("S3F17") && !line.Contains("S3F17_")) { capturingMsg = true; currentMsgType = "S3F17"; valueCount = 0; tempS3DataID = ""; tempCarrierAction = ""; tempCarrierID = ""; }
-                else if (line.Contains("S4F17") && !line.Contains("S4F17_")) { capturingMsg = true; currentMsgType = "S4F17"; valueCount = 0; }
+                else if (line.Contains("S14F9") && !line.Contains("S14F9_")) { capturingMsg = true; currentMsgType = "S14F9"; valueCount = 0; tempObjSpec = ""; tempObjType = ""; }
+                //else if (line.Contains("S16F15") && !line.Contains("S16F15_")) { capturingMsg = true; currentMsgType = "S16F15"; valueCount = 0; tempS16DataId = ""; tempS16Id = ""; }
+               
                 else if (capturingMsg && (line.Contains("<U") || line.Contains("<I") || line.Contains("<A")))
                 {
                     valueCount++;
@@ -510,19 +516,33 @@ namespace LOG_EZ
                             capturingMsg = false;
                         }
                     }
-                    else if (currentMsgType == "S4F17")
+                    else if (currentMsgType == "S14F9")
                     {
-                        if (valueCount == 1)
+                        if (valueCount == 1) tempObjSpec = extractedValue;
+                        else if (valueCount == 2) tempObjType = extractedValue;
+                        else if (valueCount == 4)
                         {
-                            actualNode = CreateReadOnlyS4F17Node(new LogEvent { Protocol = "S4F17", SpoolID = extractedValue, Timestamp = currentTime.ToString("HH:mm:ss") }, "#ABB2BF");
-                            capturingMsg = false;
+                            actualNode = CreateReadOnlyS14F9Node(new LogEvent { Protocol = "S14F9", OBJSPEC = tempObjSpec, OBJTYPE = tempObjType, ObjID = extractedValue, Timestamp = currentTime.ToString("HH:mm:ss") }, "#ABB2BF");
                         }
+                        else if (valueCount == 8) capturingMsg = false; // complete
                     }
+                    //else if (currentMsgType == "S16F15")
+                    //{
+                    //    if (valueCount == 1) tempS16DataId = extractedValue;
+                    //    else if (valueCount == 2) tempS16Id = extractedValue;
+                    //    else if (valueCount == 3)
+                    //    {
+                    //        actualNode = CreateReadOnlyS16F15Node(new LogEvent { Protocol = "S16F15", S16DataID = tempS16DataId, S16ID = tempS16Id, S16Action = extractedValue, Timestamp = currentTime.ToString("HH:mm:ss") }, "#ABB2BF");
+                    //        capturingMsg = false;
+                    //    }
+                    //}
+                   
 
                     if (actualNode != null) ActualSequenceTree.Items.Add(actualNode);
                 }
             }
 
+            // 3. EXECUTE SMART ALIGNMENT & COLORING
             try
             {
                 SmartAlignTrees();
@@ -543,7 +563,6 @@ namespace LOG_EZ
                     var eBlock = eNode?.Header as TextBlock;
                     var aBlock = aNode?.Header as TextBlock;
 
-                    // 🌟 Look for the GhostNode Tag
                     bool eIsBlank = eNode?.Tag?.ToString() == "GhostNode";
                     bool aIsBlank = aNode?.Tag?.ToString() == "GhostNode";
 
@@ -585,7 +604,6 @@ namespace LOG_EZ
                         aBlock.Text += $"   <-- (Expected at Line {pe.RowNum})";
                         eBlock.Text += $"   <-- (Swapped to Line {pa.RowNum})";
 
-                        // Color the ghost nodes purple too!
                         if (ActualSequenceTree.Items[pe.RowNum - 1] is TreeViewItem aBlankNode && aBlankNode.Tag?.ToString() == "GhostNode")
                             if (aBlankNode.Header is TextBlock aBlankBlock) aBlankBlock.Foreground = purpleBrush;
 
@@ -606,7 +624,6 @@ namespace LOG_EZ
                     eBlock.Foreground = redBrush;
                     countMissing++;
 
-                    // Find the Ghost on the Actual side and color it faded Red!
                     if (pe.RowNum - 1 >= 0 && pe.RowNum - 1 < ActualSequenceTree.Items.Count)
                     {
                         if (ActualSequenceTree.Items[pe.RowNum - 1] is TreeViewItem ghostNode && ghostNode.Tag?.ToString() == "GhostNode")
@@ -623,7 +640,6 @@ namespace LOG_EZ
                     aBlock.Foreground = yellowBrush;
                     countExtra++;
 
-                    // Find the Ghost on the Expected side and color it faded Yellow!
                     if (pa.RowNum - 1 >= 0 && pa.RowNum - 1 < ExpectedSequenceTree.Items.Count)
                     {
                         if (ExpectedSequenceTree.Items[pa.RowNum - 1] is TreeViewItem ghostNode && ghostNode.Tag?.ToString() == "GhostNode")
@@ -714,28 +730,15 @@ namespace LOG_EZ
                     }
                 }
 
-                //if (x > 0 && (y == 0 || dp[x - 1, y] >= dp[x, y - 1]))
-                //{
-                //    alignedExp.Push(expNodes[x - 1]);
-                //    alignedAct.Push(CreateBlankNode()); // <-- Back to blanks!
-                //    x--;
-                //}
-                //else
-                //{
-                //    alignedExp.Push(CreateBlankNode()); // <-- Back to blanks!
-                //    alignedAct.Push(actNodes[y - 1]);
-                //    y--;
-                //}
-                // ... inside the while loop in SmartAlignTrees()
                 if (x > 0 && (y == 0 || dp[x - 1, y] >= dp[x, y - 1]))
                 {
                     alignedExp.Push(expNodes[x - 1]);
-                    alignedAct.Push(CreateGhostNode(expNodes[x - 1])); // <-- Use Ghost Node!
+                    alignedAct.Push(CreateGhostNode(expNodes[x - 1]));
                     x--;
                 }
                 else
                 {
-                    alignedExp.Push(CreateGhostNode(actNodes[y - 1])); // <-- Use Ghost Node!
+                    alignedExp.Push(CreateGhostNode(actNodes[y - 1]));
                     alignedAct.Push(actNodes[y - 1]);
                     y--;
                 }
@@ -762,16 +765,14 @@ namespace LOG_EZ
             var allEvents = SdrLogParser.ParseLog(LogPathTextBox.Text, applyTimeFilter, filterStart, filterEnd);
             var filteredEvents = allEvents.AsEnumerable();
 
-            if (!showAllData) filteredEvents = filteredEvents.Where(ev => ev.Protocol == "S6F11" || ev.Protocol == "S3F17");
-            //|| ev.Protocol == "S4F17"
+            if (!showAllData) filteredEvents = filteredEvents.Where(ev => ev.Protocol == "S6F11" || ev.Protocol == "S3F17" || ev.Protocol == "S14F9" || ev.Protocol == "S16F15");
 
             if (!string.IsNullOrEmpty(searchValue))
             {
                 if (searchType == "DATA ID") filteredEvents = filteredEvents.Where(ev => ev.DataID == searchValue);
-                else if (searchType == "CEID") filteredEvents = filteredEvents.Where(ev => ev.CEID == searchValue || ev.CarrierAction == searchValue );
-                //|| ev.SpoolID == searchValue
+                else if (searchType == "CEID") filteredEvents = filteredEvents.Where(ev => ev.CEID == searchValue || ev.CarrierAction == searchValue);
                 else if (searchType == "REPORT ID") filteredEvents = filteredEvents.Where(ev => ev.ReportID == searchValue);
-                else filteredEvents = filteredEvents.Where(ev => ev.DataID == searchValue || ev.CEID == searchValue || ev.ReportID == searchValue || ev.CarrierAction == searchValue );
+                else filteredEvents = filteredEvents.Where(ev => ev.DataID == searchValue || ev.CEID == searchValue || ev.ReportID == searchValue || ev.CarrierAction == searchValue);
             }
 
             var finalResults = filteredEvents.ToList();
@@ -788,7 +789,7 @@ namespace LOG_EZ
             {
                 Title = "Extract Sequence Options",
                 Width = 450,
-                Height = 430,  // <--- Ensure Height is 430 right here!
+                Height = 430,
                 WindowStartupLocation = WindowStartupLocation.CenterOwner,
                 Owner = this,
                 Background = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(30, 34, 42)),
@@ -810,7 +811,6 @@ namespace LOG_EZ
 
             TextBlock title2 = new TextBlock { Text = "2. TIME RANGE SELECTION", Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(152, 195, 121)), FontWeight = FontWeights.Bold, Margin = new Thickness(0, 0, 0, 10) };
 
-            // --- REBUILD THE TIME GRID PROPERLY ---
             Grid timeGrid = new Grid { Margin = new Thickness(0, 0, 0, 30) };
             timeGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
             timeGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
@@ -826,7 +826,6 @@ namespace LOG_EZ
             DatePicker dpEnd = new DatePicker { Margin = new Thickness(0, 0, 10, 0), Height = 30 };
             TextBox txtEndTime = new TextBox { Height = 30, VerticalContentAlignment = VerticalAlignment.Center, Background = new System.Windows.Media.SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#1E222A")), BorderBrush = new System.Windows.Media.SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#3E4451")), BorderThickness = new Thickness(1), Foreground = System.Windows.Media.Brushes.White, Padding = new Thickness(5, 0, 0, 0), ToolTip = "HH:mm:ss" };
 
-            // THIS IS WHAT WAS MISSING: Putting everything in the correct Row and Column!
             Grid.SetRow(lblStart, 0); Grid.SetColumn(lblStart, 0);
             Grid.SetRow(dpStart, 0); Grid.SetColumn(dpStart, 1);
             Grid.SetRow(txtStartTime, 0); Grid.SetColumn(txtStartTime, 2);
@@ -835,10 +834,9 @@ namespace LOG_EZ
             Grid.SetRow(dpEnd, 1); Grid.SetColumn(dpEnd, 1);
             Grid.SetRow(txtEndTime, 1); Grid.SetColumn(txtEndTime, 2);
 
-            // Add them to the grid
             timeGrid.Children.Add(lblStart); timeGrid.Children.Add(dpStart); timeGrid.Children.Add(txtStartTime);
             timeGrid.Children.Add(lblEnd); timeGrid.Children.Add(dpEnd); timeGrid.Children.Add(txtEndTime);
-            // --- NEW: SEQUENCE NAME INPUT ---
+
             TextBlock title3 = new TextBlock { Text = "3. SEQUENCE NAME (OPTIONAL)", Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(229, 192, 123)), FontWeight = FontWeights.Bold, Margin = new Thickness(0, 0, 0, 10) };
             TextBox txtSequenceName = new TextBox { Height = 30, Margin = new Thickness(0, 0, 0, 30), Background = new System.Windows.Media.SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#1E222A")), BorderBrush = new System.Windows.Media.SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#3E4451")), BorderThickness = new Thickness(1), Foreground = System.Windows.Media.Brushes.White, VerticalContentAlignment = VerticalAlignment.Center, Padding = new Thickness(5, 0, 0, 0), ToolTip = "Leave blank for auto-numbering" };
 
@@ -895,7 +893,9 @@ namespace LOG_EZ
                 string currentMsgType = "";
                 int valueCount = 0;
 
-                string tempDataID = "", tempCEID = "", tempS3DataID = "", tempCarrierAction = "", tempCarrierID = "";
+                string tempDataID = "", tempCEID = "" ;
+                string tempObjSpec = "", tempObjType = "", tempObjId = "";
+                //string tempS16DataId = "", tempS16Id = "";
 
                 DateTime currentTime = DateTime.MinValue;
 
@@ -914,22 +914,20 @@ namespace LOG_EZ
 
                     if (line.Contains("S6F11") && !line.Contains("S6F11_"))
                     {
-                        capturingMsg = true;
-                        currentMsgType = "S6F11";
-                        valueCount = 0;
+                        capturingMsg = true; currentMsgType = "S6F11"; valueCount = 0;
                     }
                     else if (line.Contains("S3F17") && !line.Contains("S3F17_"))
                     {
-                        capturingMsg = true;
-                        currentMsgType = "S3F17";
-                        valueCount = 0;
+                        capturingMsg = true; currentMsgType = "S3F17"; valueCount = 0;
                     }
-                    else if (line.Contains("S4F17") && !line.Contains("S4F17_"))
+                    else if (line.Contains("S14F9") && !line.Contains("S14F9_"))
                     {
-                        capturingMsg = true;
-                        currentMsgType = "S4F17";
-                        valueCount = 0;
+                        capturingMsg = true; currentMsgType = "S14F9"; valueCount = 0;
                     }
+                    //else if (line.Contains("S16F15") && !line.Contains("S16F15_"))
+                    //{
+                    //    capturingMsg = true; currentMsgType = "S16F15"; valueCount = 0;
+                    //}
                     else if (capturingMsg && (line.Contains("<U") || line.Contains("<I") || line.Contains("<A")))
                     {
                         valueCount++;
@@ -958,25 +956,28 @@ namespace LOG_EZ
                                 capturingMsg = false;
                             }
                         }
-                        else if (currentMsgType == "S3F17")
+                        
+                        else if (currentMsgType == "S14F9")
                         {
-                            if (valueCount == 1) tempS3DataID = extractedValue;
-                            else if (valueCount == 2) tempCarrierAction = extractedValue;
-                            else if (valueCount == 3) tempCarrierID = extractedValue;
-                            else if (valueCount == 4)
+                            if (valueCount == 1) tempObjSpec = extractedValue;
+                            else if (valueCount == 2) tempObjType = extractedValue;
+                            else if (valueCount == 4) tempObjId = extractedValue;
+                            else if (valueCount >= 8)
                             {
-                                targetEvents.Add(new LogEvent { Protocol = "S3F17", DataID = tempS3DataID, CarrierAction = tempCarrierAction, CarrierID = tempCarrierID, PortID = extractedValue });
+                                targetEvents.Add(new LogEvent { Protocol = "S14F9", OBJSPEC = tempObjSpec, OBJTYPE = tempObjType, ObjID = tempObjId });
                                 capturingMsg = false;
                             }
                         }
-                        else if (currentMsgType == "S4F17")
-                        {
-                            if (valueCount == 1)
-                            {
-                                targetEvents.Add(new LogEvent { Protocol = "S4F17", SpoolID = extractedValue });
-                                capturingMsg = false;
-                            }
-                        }
+                        //else if (currentMsgType == "S16F15")
+                        //{
+                        //    if (valueCount == 1) tempS16DataId = extractedValue;
+                        //    else if (valueCount == 2) tempS16Id = extractedValue;
+                        //    else if (valueCount >= 10)
+                        //    {
+                        //        targetEvents.Add(new LogEvent { Protocol = "S16F15", S16DataID = tempS16DataId, S16ID = tempS16Id });
+                        //        capturingMsg = false;
+                        //    }
+                        //}
                     }
                 }
 
@@ -986,29 +987,50 @@ namespace LOG_EZ
                     return;
                 }
 
+                // 🌟 SAFE FILE LOADING LOGIC
                 XDocument doc;
+
                 if (File.Exists(filePath))
                 {
-                    try { doc = XDocument.Load(filePath); } catch { doc = new XDocument(new XElement("SequenceRoot")); }
+                    try
+                    {
+                        // Try to load the existing file
+                        doc = XDocument.Load(filePath);
+                    }
+                    catch (Exception ex)
+                    {
+                        // If it fails to load (locked by OneDrive, corrupted, etc.), ABORT immediately to prevent wiping data!
+                        MessageBox.Show("CRITICAL ERROR: Could not read your Sequence.xml file. It might be locked by another program or have a syntax error.\n\nSave aborted to prevent data loss!\n\nError: " + ex.Message, "Emergency Stop", MessageBoxButton.OK, MessageBoxImage.Error);
+                        return;
+                    }
                 }
-                else doc = new XDocument(new XElement("SequenceRoot"));
+                else
+                {
+                    // Only create a blank document if the file truly does not exist yet
+                    doc = new XDocument(new XElement("SequenceRoot"));
+                }
+
+                // Ensure the root exists
                 if (doc.Root == null) doc.Add(new XElement("SequenceRoot"));
-
                 int seqNum = 1;
-                while (doc.Root.Elements().Any(e => e.Name.LocalName == $"Sequence_Auto_EXTRACTED_SEQUENCE_{seqNum}")) seqNum++;
+                while (doc.Root.Elements().Any(e => e.Name.LocalName.StartsWith($"Sequence_{seqNum}_") || e.Name.LocalName == $"Sequence_{seqNum}"))
+                {
+                    seqNum++;
+                }
 
-                string autoSeqName = $"Sequence_Auto_EXTRACTED_SEQUENCE_{seqNum}";
+                string autoSeqName = $"Sequence_{seqNum}_EXTRACTED_SEQUENCE_{seqNum}";
                 string displayName = $"EXTRACTED SEQUENCE {seqNum}";
 
-                // 🌟 THE FIX: If user typed a custom name, clean it and use it instead!
                 if (!string.IsNullOrWhiteSpace(txtSequenceName.Text))
                 {
                     string cleanUserInput = txtSequenceName.Text.Trim();
                     displayName = cleanUserInput;
 
-                    // XML tags can't have spaces or certain special characters, so we format it safely
+                    // Safely format for XML
                     string safeXmlName = cleanUserInput.Replace(" ", "_").Replace("-", "_").Replace(".", "_");
-                    autoSeqName = $"Sequence_{safeXmlName}";
+
+                    // 🌟 FORCE THE 3-PART NAMING CONVENTION: Sequence_ID_Name
+                    autoSeqName = $"Sequence_{seqNum}_{safeXmlName}";
                 }
 
                 XElement newSequenceNode = new XElement(autoSeqName);
@@ -1045,10 +1067,56 @@ namespace LOG_EZ
                             outerList.Add(innerList3);
                             break;
 
-                        case "S4F17":
-                            msgNode.SetAttributeValue("NAME", parsedEv.SpoolID);
-                            outerList.Add(new XElement("Spool_ID", parsedEv.SpoolID));
+                        case "S14F9":
+                            msgNode.SetAttributeValue("NAME", parsedEv.ObjID ?? ""); // Set name attribute to ObjID
+                            outerList.Add(new XElement("OBJSPEC", parsedEv.OBJSPEC ?? ""));
+                            outerList.Add(new XElement("OBJTYPE", parsedEv.OBJTYPE ?? ""));
+                            XElement innerList14 = new XElement("List");
+                            XElement innerList14_2 = new XElement("List");
+                            innerList14_2.Add(new XElement("ATTRID", "ObjID"));
+                            innerList14_2.Add(new XElement("ATTRDATA", parsedEv.ObjID ?? ""));
+                            innerList14.Add(innerList14_2);
+                            outerList.Add(innerList14);
                             break;
+
+                        //case "S16F15":
+                        //    msgNode.SetAttributeValue("NAME", parsedEv.S16ID ?? "");
+
+                        //    // Rebuild the massive S16F15 structure for the XML File
+                        //    outerList.Add(new XElement("DATAID", parsedEv.S16DataID ?? "0"));
+
+                        //    XElement l_jobs = new XElement("List");
+                        //    XElement l_jobInfo = new XElement("List");
+
+                        //    l_jobInfo.Add(new XElement("PRJOBID", parsedEv.S16ID ?? ""));
+                        //    l_jobInfo.Add(new XElement("MF", ""));
+
+                        //    XElement l_carriers = new XElement("List");
+                        //    XElement l_carrierInfo = new XElement("List");
+                        //    l_carrierInfo.Add(new XElement("CARRIERID", ""));
+                        //    XElement l_slots = new XElement("List");
+                        //    l_slots.Add(new XElement("SLOTID", ""));
+                        //    l_carrierInfo.Add(l_slots);
+                        //    l_carriers.Add(l_carrierInfo);
+                        //    l_jobInfo.Add(l_carriers);
+
+                        //    XElement l_recipe = new XElement("List");
+                        //    l_recipe.Add(new XElement("PRRECIPEMETHOD", ""));
+                        //    l_recipe.Add(new XElement("RCPSPEC", ""));
+                        //    XElement l_params = new XElement("List");
+                        //    XElement l_paramPair = new XElement("List");
+                        //    l_paramPair.Add(new XElement("RCPPARNM", ""));
+                        //    l_paramPair.Add(new XElement("RCPPARVAL", ""));
+                        //    l_params.Add(l_paramPair);
+                        //    l_recipe.Add(l_params);
+                        //    l_jobInfo.Add(l_recipe);
+
+                        //    l_jobInfo.Add(new XElement("PRPROCESSSTART", ""));
+                        //    l_jobInfo.Add(new XElement("PRPAUSEEVENT", ""));
+
+                        //    l_jobs.Add(l_jobInfo);
+                        //    outerList.Add(l_jobs);
+                        //    break;
                     }
 
                     msgNode.Add(outerList);
@@ -1059,20 +1127,17 @@ namespace LOG_EZ
                 doc.Save(filePath);
                 InitializeMockDatabase();
                 dialog.Close();
-                MessageBox.Show($"Extracted {targetEvents.Count} events!\n\nSaved as: EXTRACTED SEQUENCE {seqNum}", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageBox.Show($"Extracted {targetEvents.Count} events!\n\nSaved as: {displayName}", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
             };
 
-            // Assemble dialog UI and show it
             mainPanel.Children.Add(title1);
             mainPanel.Children.Add(fileGrid);
             mainPanel.Children.Add(title2);
             mainPanel.Children.Add(timeGrid);
-
-            // --- ADD NEW ELEMENTS HERE ---
             mainPanel.Children.Add(title3);
             mainPanel.Children.Add(txtSequenceName);
-
             mainPanel.Children.Add(btnSave);
+
             dialog.Content = mainPanel;
             dialog.ShowDialog();
         }
@@ -1112,16 +1177,134 @@ namespace LOG_EZ
             s3f17.Items.Add(list_S3F17);
             root.Items.Add(s3f17);
 
-            // --- S4F17 ---
-            var s4f17 = new TreeViewItem { Header = "S4F17", IsExpanded = false };
-            var list_S4F17 = new TreeViewItem { Header = "[List]", IsExpanded = true };
-            list_S4F17.Items.Add(new TreeViewItem { Header = "Spool_ID", IsExpanded = true });
-            s4f17.Items.Add(list_S4F17);
-            root.Items.Add(s4f17);
+            //// --- S4F17 ---
+            //var s4f17 = new TreeViewItem { Header = "S4F17", IsExpanded = false };
+            //var list_S4F17 = new TreeViewItem { Header = "[List]", IsExpanded = true };
+            //list_S4F17.Items.Add(new TreeViewItem { Header = "Spool_ID", IsExpanded = true });
+            //s4f17.Items.Add(list_S4F17);
+            //root.Items.Add(s4f17);
+
+            // --- ---
+            var s14f9 = new TreeViewItem { Header = "S14F9", IsExpanded = false };
+            var list_S14F9 = new TreeViewItem { Header = "[List]", IsExpanded = true };
+            list_S14F9.Items.Add(new TreeViewItem { Header = "OBJSPEC", IsExpanded = true });
+            var list_2_S14F9 = new TreeViewItem { Header = "[List]", IsExpanded = true };
+            var list_3_S14F9 = new TreeViewItem { Header = "[List]", IsExpanded = true };
+            list_3_S14F9.Items.Add(new TreeViewItem { Header = "ATTRID", IsExpanded = true });
+            list_3_S14F9.Items.Add(new TreeViewItem { Header = "ATTRDATA", IsExpanded = true });
+            list_2_S14F9.Items.Add(list_3_S14F9);
+            list_S14F9.Items.Add(list_2_S14F9);
+            s14f9.Items.Add(list_S14F9);
+            root.Items.Add(s14f9);
+
+
+
+            // ---S16F15(Process Job Create)-- -
+            //var s16f15 = new TreeViewItem { Header = "S16F15", IsExpanded = false };
+            //var l_main = new TreeViewItem { Header = "[List]", IsExpanded = true };
+            //l_main.Items.Add(new TreeViewItem { Header = "DATAID", IsExpanded = true });
+
+            //var l_jobs = new TreeViewItem { Header = "[List]", IsExpanded = true }; // List of jobs
+            //var l_jobInfo = new TreeViewItem { Header = "[List]", IsExpanded = true }; // Single job details
+            //l_jobInfo.Items.Add(new TreeViewItem { Header = "PRJOBID", IsExpanded = true });
+            //l_jobInfo.Items.Add(new TreeViewItem { Header = "MF", IsExpanded = true });
+
+            //var l_carriers = new TreeViewItem { Header = "[List]", IsExpanded = true }; // Carriers list
+            //var l_carrierInfo = new TreeViewItem { Header = "[List]", IsExpanded = true };
+            //l_carrierInfo.Items.Add(new TreeViewItem { Header = "CARRIERID", IsExpanded = true });
+            //var l_slots = new TreeViewItem { Header = "[List]", IsExpanded = true };
+            //l_slots.Items.Add(new TreeViewItem { Header = "SLOTID", IsExpanded = true });
+            //l_carrierInfo.Items.Add(l_slots);
+            //l_carriers.Items.Add(l_carrierInfo);
+            //l_jobInfo.Items.Add(l_carriers);
+
+            //var l_recipe = new TreeViewItem { Header = "[List]", IsExpanded = true }; // Recipe list
+            //l_recipe.Items.Add(new TreeViewItem { Header = "PRRECIPEMETHOD", IsExpanded = true });
+            //l_recipe.Items.Add(new TreeViewItem { Header = "RCPSPEC", IsExpanded = true });
+            //var l_params = new TreeViewItem { Header = "[List]", IsExpanded = true };
+            //var l_paramPair = new TreeViewItem { Header = "[List]", IsExpanded = true };
+            //l_paramPair.Items.Add(new TreeViewItem { Header = "RCPPARNM", IsExpanded = true });
+            //l_paramPair.Items.Add(new TreeViewItem { Header = "RCPPARVAL", IsExpanded = true });
+            //l_params.Items.Add(l_paramPair);
+            //l_recipe.Items.Add(l_params);
+            //l_jobInfo.Items.Add(l_recipe);
+
+            //l_jobInfo.Items.Add(new TreeViewItem { Header = "PRPROCESSSTART", IsExpanded = true });
+            //l_jobInfo.Items.Add(new TreeViewItem { Header = "PRPAUSEEVENT", IsExpanded = true });
+
+            //l_jobs.Items.Add(l_jobInfo);
+            //l_main.Items.Add(l_jobs);
+            //s16f15.Items.Add(l_main);
+            //root.Items.Add(s16f15);
 
             TreeView2.Items.Add(root);
         }
 
+        private TreeViewItem CreateReadOnlyS14F9Node(LogEvent ev, string colorHex)
+        {
+            var rootNode = new TreeViewItem { IsExpanded = false, Focusable = false };
+            rootNode.Expanded += SyncTreeNodes; rootNode.Collapsed += SyncTreeNodes;
+
+            rootNode.Header = new TextBlock { Text = "S14F9", Foreground = new System.Windows.Media.SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString(colorHex)), FontFamily = new System.Windows.Media.FontFamily("Consolas"), FontWeight = FontWeights.Bold, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 4, 0, 4) };
+
+            var outerList = new TreeViewItem { Header = "[List]", IsExpanded = false, Focusable = false };
+            outerList.Items.Add(CreateXmlTagRow("OBJSPEC", ev.OBJSPEC ?? ""));
+
+            var attrList = new TreeViewItem { Header = "[List]", IsExpanded = false, Focusable = false };
+            var attrPair = new TreeViewItem { Header = "[List]", IsExpanded = false, Focusable = false };
+            attrPair.Items.Add(CreateXmlTagRow("ATTRID", "ObjID")); // Example mapping
+            attrPair.Items.Add(CreateXmlTagRow("ATTRDATA", ev.ObjID ?? ""));
+
+            attrList.Items.Add(attrPair);
+            outerList.Items.Add(attrList);
+            rootNode.Items.Add(outerList);
+            return rootNode;
+        }
+         // / / / / / / / / / / / / / / /
+        //private TreeViewItem CreateReadOnlyS16F15Node(LogEvent ev, string colorHex)
+        //{
+        //    var rootNode = new TreeViewItem { IsExpanded = false, Focusable = false };
+        //    rootNode.Expanded += SyncTreeNodes; rootNode.Collapsed += SyncTreeNodes;
+
+        //    rootNode.Header = new TextBlock { Text = $"S16F15", Foreground = new System.Windows.Media.SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString(colorHex)), FontFamily = new System.Windows.Media.FontFamily("Consolas"), FontWeight = FontWeights.Bold, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 4, 0, 4) };
+
+        //    var l_main = new TreeViewItem { Header = "[List]", IsExpanded = false, Focusable = false };
+        //    l_main.Items.Add(CreateXmlTagRow("DATAID", ev.S16DataID ?? "0"));
+
+        //    var l_jobs = new TreeViewItem { Header = "[List]", IsExpanded = false, Focusable = false };
+        //    var l_jobInfo = new TreeViewItem { Header = "[List]", IsExpanded = false, Focusable = false };
+        //    l_jobInfo.Items.Add(CreateXmlTagRow("PRJOBID", ev.S16ID ?? ""));
+        //    l_jobInfo.Items.Add(CreateXmlTagRow("MF", ""));
+
+        //    var l_carriers = new TreeViewItem { Header = "[List]", IsExpanded = false, Focusable = false };
+        //    var l_carrierInfo = new TreeViewItem { Header = "[List]", IsExpanded = false, Focusable = false };
+        //    l_carrierInfo.Items.Add(CreateXmlTagRow("CARRIERID", ""));
+        //    var l_slots = new TreeViewItem { Header = "[List]", IsExpanded = false, Focusable = false };
+        //    l_slots.Items.Add(CreateXmlTagRow("SLOTID", ""));
+        //    l_carrierInfo.Items.Add(l_slots);
+        //    l_carriers.Items.Add(l_carrierInfo);
+        //    l_jobInfo.Items.Add(l_carriers);
+
+        //    var l_recipe = new TreeViewItem { Header = "[List]", IsExpanded = false, Focusable = false };
+        //    l_recipe.Items.Add(CreateXmlTagRow("PRRECIPEMETHOD", ""));
+        //    l_recipe.Items.Add(CreateXmlTagRow("RCPSPEC", ""));
+        //    var l_params = new TreeViewItem { Header = "[List]", IsExpanded = false, Focusable = false };
+        //    var l_paramPair = new TreeViewItem { Header = "[List]", IsExpanded = false, Focusable = false };
+        //    l_paramPair.Items.Add(CreateXmlTagRow("RCPPARNM", ""));
+        //    l_paramPair.Items.Add(CreateXmlTagRow("RCPPARVAL", ""));
+        //    l_params.Items.Add(l_paramPair);
+        //    l_recipe.Items.Add(l_params);
+        //    l_jobInfo.Items.Add(l_recipe);
+
+        //    l_jobInfo.Items.Add(CreateXmlTagRow("PRPROCESSSTART", ""));
+        //    l_jobInfo.Items.Add(CreateXmlTagRow("PRPAUSEEVENT", ""));
+
+        //    l_jobs.Items.Add(l_jobInfo);
+        //    l_main.Items.Add(l_jobs);
+        //    rootNode.Items.Add(l_main);
+        //    return rootNode;
+        //}
+        /// //  / / / / / / / / / / / / /  / / / 
         private void TreeView2_SelectedItemChanged(object sender, RoutedPropertyChangedEventArgs<object> e)
         {
             var selectedPalette = TreeView2.SelectedItem as TreeViewItem;
@@ -1194,6 +1377,7 @@ namespace LOG_EZ
 
             selectedPalette.IsSelected = false;
         }
+
         private void AddSmartItemToNode(TreeViewItem targetNode, string itemName, string itemValue)
         {
             var newItem = CreateXmlTagRow(itemName, itemValue);
@@ -1224,6 +1408,15 @@ namespace LOG_EZ
         {
             var rowItem = new TreeViewItem { IsExpanded = false, Tag = "TagLeaf" };
             rowItem.ContextMenu = null;
+            rowItem.ContextMenuOpening += (s, e) =>
+            {
+                e.Handled = true; // This explicitly stops the parent's menu from appearing
+            };
+            rowItem.PreviewMouseRightButtonDown += (s, e) =>
+            {
+                rowItem.IsSelected = true;
+                e.Handled = true;
+            };
 
             var panel = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 2, 0, 2), Background = System.Windows.Media.Brushes.Transparent };
 
@@ -1237,16 +1430,10 @@ namespace LOG_EZ
                 FontWeight = FontWeights.Bold
             });
 
-            // 🌟 THIS IS THE FIX: Only show brackets if there is actually text inside the value!
-            // CHANGE THIS:
-            // panel.Children.Add(new TextBlock { Text = $" [{value}]", ... });
-
-            // TO THIS:
             string displayValue = string.IsNullOrWhiteSpace(value) ? "" : $" [{value}]";
             panel.Children.Add(new TextBlock
             {
                 Text = displayValue,
-                // ... (keep the rest of the styling the same)
                 Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0x98, 0xC3, 0x79)),
                 VerticalAlignment = VerticalAlignment.Center,
                 Margin = new Thickness(10, 0, 0, 0),
@@ -1281,8 +1468,6 @@ namespace LOG_EZ
                     if (dlg.ShowDialog() == true)
                     {
                         nameBlock.Text = dlg.ItemName.Replace(" ", "_").Replace("(", "_").Replace(")", "_");
-
-                        // 🌟 FIX PART 2: Also hide brackets if the user saves a blank value from the text dialog
                         valueBlock.Text = string.IsNullOrWhiteSpace(dlg.ItemValue) ? "" : $" [{dlg.ItemValue}]";
                     }
                 }
@@ -1290,11 +1475,11 @@ namespace LOG_EZ
 
             return rowItem;
         }
+
         private void ShowSmartCeidDialog(TextBlock valueBlock)
         {
             string currentVal = valueBlock.Text.Replace("[", "").Replace("]", "").Trim();
 
-            // Build the dynamic window
             Window dlg = new Window
             {
                 Title = "Select CEID",
@@ -1308,11 +1493,9 @@ namespace LOG_EZ
 
             StackPanel panel = new StackPanel { Margin = new Thickness(20) };
 
-            // CEID ComboBox
             panel.Children.Add(new TextBlock { Text = "SELECT CEID:", Foreground = System.Windows.Media.Brushes.LightGray, FontWeight = FontWeights.Bold, Margin = new Thickness(0, 0, 0, 5) });
             ComboBox cmbCeid = new ComboBox { Height = 30, IsEditable = true, Text = currentVal, Margin = new Thickness(0, 0, 0, 15) };
 
-            // Auto-populate the combo box by reading your EVENTS.txt file
             try
             {
                 string eventPath = @"C:\Users\ArJuN\OneDrive\Documents\project phase 1\EVENTS.txt";
@@ -1328,13 +1511,11 @@ namespace LOG_EZ
                     }
                 }
             }
-            catch { /* Ignore if file missing */ }
+            catch { }
 
-            // Event Name Display (Auto-fills)
             panel.Children.Add(new TextBlock { Text = "EVENT NAME:", Foreground = System.Windows.Media.Brushes.LightGray, FontWeight = FontWeights.Bold, Margin = new Thickness(0, 0, 0, 5) });
             TextBox txtEventName = new TextBox { Height = 30, IsReadOnly = true, Background = System.Windows.Media.Brushes.DarkGray, Foreground = System.Windows.Media.Brushes.Black, Text = EventMapper.GetEventName(currentVal), Margin = new Thickness(0, 0, 0, 20), VerticalContentAlignment = VerticalAlignment.Center, Padding = new Thickness(5, 0, 0, 0) };
 
-            // The Magic: Update Event Name instantly when CEID changes
             cmbCeid.SelectionChanged += (s, e) => {
                 if (cmbCeid.SelectedItem != null) txtEventName.Text = EventMapper.GetEventName(cmbCeid.SelectedItem.ToString());
             };
@@ -1342,7 +1523,6 @@ namespace LOG_EZ
                 txtEventName.Text = EventMapper.GetEventName(cmbCeid.Text);
             };
 
-            // Save Button
             Button btnSave = new Button { Content = "SAVE CEID", Height = 35, Background = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(97, 175, 239)), FontWeight = FontWeights.Bold };
             btnSave.Click += (s, e) =>
             {
@@ -1357,6 +1537,7 @@ namespace LOG_EZ
             dlg.Content = panel;
             dlg.ShowDialog();
         }
+
         private void ShowSmartCarrierActionDialog(TextBlock valueBlock)
         {
             string currentVal = valueBlock.Text.Replace("[", "").Replace("]", "").Trim();
@@ -1378,24 +1559,20 @@ namespace LOG_EZ
 
             ComboBox cmbAction = new ComboBox { Height = 30, IsEditable = true, Margin = new Thickness(0, 0, 0, 25) };
 
-            // Populate with standard values from documentation & logs
-            cmbAction.Items.Add("ProceedWithCarrier"); // From log screenshots
-            cmbAction.Items.Add("CarrierRelease");     // From log screenshots
+            cmbAction.Items.Add("ProceedWithCarrier");
+            cmbAction.Items.Add("CarrierRelease");
             cmbAction.Items.Add("1 (BIND)");
             cmbAction.Items.Add("2 (CANCEL_BIND)");
             cmbAction.Items.Add("3 (PROCEED_WITH_CARRIER)");
             cmbAction.Items.Add("4 (CANCEL_CARRIER_AT_PORT)");
             cmbAction.Items.Add("5 (CANCEL_CARRIER_NOTIFICATION)");
 
-            // Set current text
             cmbAction.Text = currentVal;
 
             Button btnSave = new Button { Content = "SAVE ACTION", Height = 35, Background = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(198, 120, 221)), FontWeight = FontWeights.Bold };
             btnSave.Click += (s, e) =>
             {
                 string finalAction = string.IsNullOrWhiteSpace(cmbAction.Text) ? "0" : cmbAction.Text.Trim();
-
-                // If they picked "1 (BIND)", strip it down to just "1" for the XML, or keep the string if they typed it
                 if (finalAction.Contains("(")) finalAction = finalAction.Split(' ')[0];
 
                 valueBlock.Text = $" [{finalAction}]";
@@ -1671,12 +1848,20 @@ namespace LOG_EZ
 
             try
             {
-                XDocument doc;
+                // 🌟 THE FIX: Assign a default value immediately so the compiler is happy
+                XDocument doc = new XDocument(new XElement("SequenceRoot"));
+
                 if (File.Exists(filePath))
                 {
-                    try { doc = XDocument.Load(filePath); } catch { doc = new XDocument(new XElement("SequenceRoot")); }
+                    try
+                    {
+                        doc = XDocument.Load(filePath);
+                    }
+                    catch
+                    {
+                        // If it fails to load, it just keeps the blank one we created above!
+                    }
                 }
-                else doc = new XDocument(new XElement("SequenceRoot"));
 
                 if (doc.Root == null) doc.Add(new XElement("SequenceRoot"));
 
@@ -1799,6 +1984,101 @@ namespace LOG_EZ
                     MessageBox.Show("Report exported successfully!\n\nYou can open this file in Excel.", "Export Complete", MessageBoxButton.OK, MessageBoxImage.Information);
                 }
                 catch (Exception ex) { MessageBox.Show($"Error saving report: {ex.Message}", "Export Error", MessageBoxButton.OK, MessageBoxImage.Error); }
+            }
+        }
+        // ==========================================
+        // CEID DICTIONARY MANAGEMENT
+        // ==========================================
+        private void BtnCeidDict_Click(object sender, RoutedEventArgs e)
+        {
+            // Assuming your XAML has a Border/Grid named 'CeidModal'
+            if (FindName("CeidModal") is UIElement ceidModal) ceidModal.Visibility = Visibility.Visible;
+            LoadCeidDictionaryUi();
+        }
+
+        private void BtnCloseCeidModal_Click(object sender, RoutedEventArgs e)
+        {
+            if (FindName("CeidModal") is UIElement ceidModal) ceidModal.Visibility = Visibility.Collapsed;
+        }
+
+        private void LoadCeidDictionaryUi()
+        {
+            if (!(FindName("CeidListPanel") is StackPanel ceidListPanel)) return;
+            ceidListPanel.Children.Clear();
+
+            string eventPath = @"C:\Users\ArJuN\OneDrive\Documents\project phase 1\EVENTS.txt";
+            if (File.Exists(eventPath))
+            {
+                foreach (var line in File.ReadLines(eventPath))
+                {
+                    var parts = line.Split(new[] { '=', ',', '\t' }, 2, StringSplitOptions.RemoveEmptyEntries);
+                    if (parts.Length == 2)
+                    {
+                        AddCeidRowToUi(parts[0].Trim(), parts[1].Trim());
+                    }
+                }
+            }
+        }
+
+        private void BtnAddCeidRow_Click(object sender, RoutedEventArgs e)
+        {
+            AddCeidRowToUi("", "");
+        }
+
+        private void AddCeidRowToUi(string ceid, string name)
+        {
+            if (!(FindName("CeidListPanel") is StackPanel ceidListPanel)) return;
+
+            Grid row = new Grid { Margin = new Thickness(0, 5, 0, 5) };
+            row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(2, GridUnitType.Star) });
+            row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+
+            TextBox txtCeid = new TextBox { Text = ceid, Margin = new Thickness(0, 0, 5, 0), Background = System.Windows.Media.Brushes.LightGray, FontWeight = FontWeights.Bold, Padding = new Thickness(5) };
+            TextBox txtName = new TextBox { Text = name, Margin = new Thickness(5, 0, 5, 0), Background = System.Windows.Media.Brushes.LightGray, Padding = new Thickness(5) };
+            Button btnDelete = new Button { Content = "X", Width = 30, Background = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0xE0, 0x6C, 0x75)), Foreground = System.Windows.Media.Brushes.White, FontWeight = FontWeights.Bold };
+
+            btnDelete.Click += (s, ev) => ceidListPanel.Children.Remove(row);
+
+            Grid.SetColumn(txtCeid, 0);
+            Grid.SetColumn(txtName, 1);
+            Grid.SetColumn(btnDelete, 2);
+
+            row.Children.Add(txtCeid);
+            row.Children.Add(txtName);
+            row.Children.Add(btnDelete);
+
+            ceidListPanel.Children.Add(row);
+        }
+
+        private void BtnSaveCeids_Click(object sender, RoutedEventArgs e)
+        {
+            if (!(FindName("CeidListPanel") is StackPanel ceidListPanel)) return;
+
+            string eventPath = @"C:\Users\ArJuN\OneDrive\Documents\project phase 1\EVENTS.txt";
+            List<string> lines = new List<string>();
+
+            foreach (Grid row in ceidListPanel.Children)
+            {
+                TextBox txtCeid = row.Children[0] as TextBox;
+                TextBox txtName = row.Children[1] as TextBox;
+
+                if (txtCeid != null && txtName != null && !string.IsNullOrWhiteSpace(txtCeid.Text))
+                {
+                    lines.Add($"{txtCeid.Text.Trim()}={txtName.Text.Trim()}");
+                }
+            }
+
+            try
+            {
+                File.WriteAllLines(eventPath, lines);
+                EventMapper.LoadEventMapping(eventPath); // Refresh memory instantly
+                MessageBox.Show("CEID Dictionary saved successfully!", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+                if (FindName("CeidModal") is UIElement ceidModal) ceidModal.Visibility = Visibility.Collapsed;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error saving dictionary: {ex.Message}", "Save Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
     }

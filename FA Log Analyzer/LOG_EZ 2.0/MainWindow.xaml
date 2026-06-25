@@ -194,342 +194,409 @@
         </Style>
     </Window.Resources>
 
-    <Grid Margin="15">
-        <TabControl Background="Transparent" BorderThickness="0" Foreground="{StaticResource TextHighlightBrush}">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="Auto"/>
+        </Grid.ColumnDefinitions>
 
-            <TabItem Header=" SEQUENCE SIMULATION"  Padding="15,8" FontSize="13"  FontWeight="Bold">
-                <Grid Margin="0,15,0,0">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="1*"/>
-                        <ColumnDefinition Width="1.6*"/>
-                        <ColumnDefinition Width="1*"/>
-                    </Grid.ColumnDefinitions>
+        <Grid Grid.Column="0" Margin="15">
 
-                    <Border Style="{StaticResource PremiumPanel}" Grid.Column="0" Margin="0,0,8,0" BorderThickness="1,1,1,1">
-                        <Grid>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="*"/>
-                                <RowDefinition Height="Auto"/>
-                            </Grid.RowDefinitions>
-                            <TextBlock Grid.Row="0" Text="SEQUENCES" FontSize="15" Foreground="{StaticResource AccentYellow}" FontWeight="Heavy" HorizontalAlignment="Center"/>
-                            <Separator Grid.Row="1" Background="{StaticResource PanelBorderBrush}" Margin="0,10,0,10" Height="1"/>
-                            <ListBox x:Name="SequenceListBox" Grid.Row="2" MouseDoubleClick="SequenceListBox_MouseDoubleClick" Background="#FF262525" Margin="0,0,0,15"/>
+            <!--<Button Content="✨ ASK LEO " HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,0,0,0" Height="30" Padding="10,0" Background="#61AFEF" Foreground="Black" FontWeight="Bold" Cursor="Hand" Panel.ZIndex="1000" Click="BtnToggleAi_Click"/>-->
 
-                            <UniformGrid Grid.Row="3" Columns="2" Height="36">
-                                <Button Content="Auto-Extract" Click="BtnAutoExtract_Click" Margin="0,0,4,0" Background="#C678DD" Foreground="#1E222A"/>
-                                <Button Content="View XML" Click="BtnViewXml_Click" Margin="2,0,0,0" Background="{StaticResource PanelBorderBrush}" Foreground="{StaticResource AccentYellow}"/>
-                            </UniformGrid>
-                        </Grid>
-                    </Border>
+            <TabControl Background="Transparent" BorderThickness="0" Foreground="{StaticResource TextHighlightBrush}">
 
-                    <Border Style="{StaticResource PremiumPanel}" Grid.Column="1" Margin="8,0,8,0" BorderThickness="1,1,1,1">
-                        <Grid>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="*"/>
-                                <RowDefinition Height="Auto"/>
-                            </Grid.RowDefinitions>
-                            <TextBlock Grid.Row="0" Text=" SEQUENCE EDITOR" FontSize="15" Foreground="{StaticResource AccentBlue}" FontWeight="Heavy" HorizontalAlignment="Center"/>
-                            <Separator Grid.Row="1" Background="{StaticResource PanelBorderBrush}" Margin="0,10,0,10" Height="1"/>
-                            <TreeView x:Name="TreeView1" Grid.Row="2" Margin="0,0,0,15" Background="#FF262525"/>
+                <TabItem Header="1. SEQUENCE SIMULATION"  Padding="15,8" FontSize="13"  FontWeight="Bold">
+                    <Grid Margin="0,15,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="1*"/>
+                            <ColumnDefinition Width="1.6*"/>
+                            <ColumnDefinition Width="1*"/>
+                        </Grid.ColumnDefinitions>
 
-                            <UniformGrid Grid.Row="3" Columns="4" Height="36">
-                                <Button Content="New" Click="BtnNew_Click" Margin="0,0,4,0" Background="{StaticResource AccentBlue}" Foreground="#1E222A"/>
-                                <Button Content="Save" Click="BtnSave_Click" Margin="2,0,4,0" Background="{StaticResource AccentGreen}" Foreground="#1E222A"/>
-                                <Button Content="Delete" Click="BtnDelete_Click" Margin="2,0,4,0" Background="{StaticResource AccentRed}" Foreground="#1E222A"/>
-                                <Button Content="Clear" Click="BtnClear_Click" Margin="2,0,0,0" Background="#5C6370" Foreground="#FFFFFF"/>
-                            </UniformGrid>
-                        </Grid>
-                    </Border>
-
-                    <Border Style="{StaticResource PremiumPanel}" Grid.Column="2" Margin="8,0,0,0" BorderThickness="1,1,1,1">
-                        <Grid>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="*"/>
-                            </Grid.RowDefinitions>
-                            <TextBlock Grid.Row="0" Text="SECS STREAMS" FontSize="15" HorizontalAlignment="Center" Foreground="{StaticResource AccentGreen}" FontWeight="Heavy"/>
-                            <Separator Grid.Row="1" Background="{StaticResource PanelBorderBrush}" Margin="0,10,0,10" Height="1"/>
-                            <TreeView x:Name="TreeView2" Grid.Row="2" SelectedItemChanged="TreeView2_SelectedItemChanged" Background="#FF262525"/>
-                        </Grid>
-                    </Border>
-                </Grid>
-            </TabItem>
-
-            <TabItem Header=" ANALYSIS TAB " Padding="15,8" FontSize="13" FontWeight="Bold">
-                <Grid Margin="0,15,0,0">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="350"/>
-                        <ColumnDefinition Width="*"/>
-                    </Grid.ColumnDefinitions>
-
-                    <Border Style="{StaticResource PremiumPanel}" Grid.Column="0" Margin="0,0,8,0">
-                        <Grid>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                            </Grid.RowDefinitions>
-
-                            <TextBlock Grid.Row="0" Text="1. UPLOAD SDR LOG" FontSize="12" Foreground="{StaticResource AccentBlue}" FontWeight="Heavy"/>
-                            <Separator Grid.Row="1" Background="{StaticResource PanelBorderBrush}" Margin="0,10,0,15" Height="1"/>
-                            <Grid Grid.Row="2" Margin="0,0,0,15">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="Auto"/>
-                                </Grid.ColumnDefinitions>
-                                <TextBox x:Name="LogPathTextBox" Grid.Column="0" IsReadOnly="True" Height="34" VerticalContentAlignment="Center" Background="#1E222A" BorderBrush="{StaticResource PanelBorderBrush}" BorderThickness="1" Foreground="{StaticResource TextMainBrush}"/>
-                                <Button Grid.Column="1" Content="BROWSE" Click="OnUploadLogClick" Width="80" Margin="5,0,0,0" Background="{StaticResource PanelBorderBrush}" Foreground="{StaticResource TextHighlightBrush}"/>
-                            </Grid>
-
-                            <TextBlock Grid.Row="3" Text="2. SELECT TARGET SEQUENCE" FontSize="12" Foreground="{StaticResource AccentYellow}" FontWeight="Heavy"/>
-                            <Separator Grid.Row="4" Background="{StaticResource PanelBorderBrush}" Margin="0,10,0,15" Height="1"/>
-                            <ComboBox x:Name="AnalysisSequenceComboBox" Grid.Row="5" Height="34" Margin="0,0,0,15" FontFamily="Consolas" FontSize="14" Background="#1E222A" Foreground="{StaticResource TextMainBrush}" BorderBrush="{StaticResource PanelBorderBrush}"/>
-
-                            <!--<TextBlock Grid.Row="6" Text="3. SELECT PROTOCOL(S)" FontSize="12" Foreground="{StaticResource AccentRed}" FontWeight="Heavy" Margin="0,10,0,0"/>
-                            <Separator Grid.Row="7" Background="{StaticResource PanelBorderBrush}" Margin="0,10,0,10" Height="1"/>
-                            <StackPanel Grid.Row="8" Orientation="Vertical" Margin="0,0,0,15">
-                                <RadioButton x:Name="ProtocolS6F11Only" Content="S6F11 ONLY" IsChecked="True" Margin="0,0,0,8"/>
-                                <RadioButton x:Name="ProtocolS3F17Only" Content="S3F17 ONLY" Margin="0,0,0,8"/>
-                                <RadioButton x:Name="ProtocolBothSeparate" Content="BOTH SEPARATE" Margin="0,0,0,8"/>
-                                <RadioButton x:Name="ProtocolBothTogether" Content="BOTH TOGETHER" Margin="0,0,0,0"/>
-                            </StackPanel>-->
-
-                            <TextBlock Grid.Row="9" Text="4. TIME RANGE SELECTION" FontSize="12" Foreground="{StaticResource AccentGreen}" FontWeight="Heavy" Margin="0,10,0,0"/>
-                            <Separator Grid.Row="10" Background="{StaticResource PanelBorderBrush}" Margin="0,10,0,10" Height="1"/>
-                            <StackPanel Grid.Row="11" Orientation="Horizontal" Margin="0,0,0,10">
-                                <RadioButton x:Name="Tab2ShowAllRadio" Content="SHOW ALL EVENTS" IsChecked="True" Checked="Tab2TimeToggle_Checked"/>
-                                <RadioButton x:Name="Tab2FilterRadio" Content="FILTER BY TIME" Checked="Tab2TimeToggle_Checked"/>
-                            </StackPanel>
-
-                            <Grid x:Name="Tab2TimeGrid" Grid.Row="12" Margin="0,0,0,20" Visibility="Collapsed">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto"/>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="80"/>
-                                </Grid.ColumnDefinitions>
+                        <Border Style="{StaticResource PremiumPanel}" Grid.Column="0" Margin="0,0,8,0" BorderThickness="1,1,1,1">
+                            <Grid>
                                 <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="*"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+                                <TextBlock Grid.Row="0" Text="SEQUENCES" FontSize="15" Foreground="{StaticResource AccentYellow}" FontWeight="Heavy" HorizontalAlignment="Center"/>
+                                <Separator Grid.Row="1" Background="{StaticResource PanelBorderBrush}" Margin="0,10,0,10" Height="1"/>
+                                <ListBox x:Name="SequenceListBox" Grid.Row="2" MouseDoubleClick="SequenceListBox_MouseDoubleClick" Background="#FF1F1F1F" Margin="0,0,0,15"/>
+
+                                <UniformGrid Grid.Row="3" Columns="3" Height="36">
+                                    <Button Content="Auto-Extract" Click="BtnAutoExtract_Click" Margin="-11,0,4,0" Background="#C678DD" Foreground="#1E222A"/>
+                                    <Button Content="View XML" Click="BtnViewXml_Click" Margin="2,0,4,0" Background="{StaticResource PanelBorderBrush}" Foreground="{StaticResource AccentYellow}"/>
+                                    <Button Content="VIEW EVENTS" Click="BtnCeidDict_Click" Margin="1,0,-13,0" Background="{StaticResource AccentBlue}" Foreground="#1E222A"/>
+                                </UniformGrid>
+                            </Grid>
+                        </Border>
+
+                        <Border Style="{StaticResource PremiumPanel}" Grid.Column="1" Margin="8,0,8,0" BorderThickness="1,1,1,1">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="*"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+                                <TextBlock Grid.Row="0" Text=" SEQUENCE EDITOR" FontSize="15" Foreground="{StaticResource AccentBlue}" FontWeight="Heavy" HorizontalAlignment="Center"/>
+                                <Separator Grid.Row="1" Background="{StaticResource PanelBorderBrush}" Margin="0,10,0,10" Height="1"/>
+                                <TreeView x:Name="TreeView1" Grid.Row="2" Margin="0,0,0,15" Background="#FF1F1F1F"/>
+
+                                <UniformGrid Grid.Row="3" Columns="4" Height="36">
+                                    <Button Content="New" Click="BtnNew_Click" Margin="0,0,4,0" Background="{StaticResource AccentBlue}" Foreground="#1E222A"/>
+                                    <Button Content="Save" Click="BtnSave_Click" Margin="2,0,4,0" Background="{StaticResource AccentGreen}" Foreground="#1E222A"/>
+                                    <Button Content="Delete" Click="BtnDelete_Click" Margin="2,0,4,0" Background="{StaticResource AccentRed}" Foreground="#1E222A"/>
+                                    <Button Content="Clear" Click="BtnClear_Click" Margin="2,0,0,0" Background="#5C6370" Foreground="#FFFFFF"/>
+                                </UniformGrid>
+                            </Grid>
+                        </Border>
+
+                        <Border Style="{StaticResource PremiumPanel}" Grid.Column="2" Margin="8,0,0,0" BorderThickness="1,1,1,1">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="*"/>
+                                </Grid.RowDefinitions>
+                                <TextBlock Grid.Row="0" Text="SECS STREAMS" FontSize="15" HorizontalAlignment="Center" Foreground="{StaticResource AccentGreen}" FontWeight="Heavy"/>
+                                <Separator Grid.Row="1" Background="{StaticResource PanelBorderBrush}" Margin="0,10,0,10" Height="1"/>
+                                <TreeView x:Name="TreeView2" Grid.Row="2" SelectedItemChanged="TreeView2_SelectedItemChanged" Background="#FF1F1F1F"/>
+                            </Grid>
+                        </Border>
+                    </Grid>
+                </TabItem>
+
+                <TabItem Header="2. ANALYSIS TAB " Padding="15,8" FontSize="13" FontWeight="Bold">
+                    <Grid Margin="0,15,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="350"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <Border Style="{StaticResource PremiumPanel}" Grid.Column="0" Margin="0,0,8,0">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
                                     <RowDefinition Height="Auto"/>
                                     <RowDefinition Height="Auto"/>
                                 </Grid.RowDefinitions>
 
-                                <TextBlock Grid.Row="0" Grid.Column="0" Text="START:" FontSize="11" Foreground="{StaticResource TextMainBrush}" FontWeight="Heavy" VerticalAlignment="Center" Margin="0,0,10,10"/>
-                                <DatePicker x:Name="Tab2StartDate" Grid.Row="0" Grid.Column="1" Height="30" Margin="0,0,10,10"/>
-                                <TextBox x:Name="Tab2StartTime" Grid.Row="0" Grid.Column="2" Height="30" VerticalContentAlignment="Center" Background="#1E222A" BorderBrush="{StaticResource PanelBorderBrush}" BorderThickness="1" Foreground="{StaticResource TextMainBrush}" Margin="0,0,0,10" Padding="5,0" ToolTip="HH:mm:ss (e.g. 16:53:00)"/>
-
-                                <TextBlock Grid.Row="1" Grid.Column="0" Text="END:" FontSize="11" Foreground="{StaticResource TextMainBrush}" FontWeight="Heavy" VerticalAlignment="Center"/>
-                                <DatePicker x:Name="Tab2EndDate" Grid.Row="1" Grid.Column="1" Height="30" Margin="0,0,10,0"/>
-                                <TextBox x:Name="Tab2EndTime" Grid.Row="1" Grid.Column="2" Height="30" VerticalContentAlignment="Center" Background="#1E222A" BorderBrush="{StaticResource PanelBorderBrush}" BorderThickness="1" Foreground="{StaticResource TextMainBrush}" Padding="5,0" ToolTip="HH:mm:ss (e.g. 16:55:00)"/>
-                            </Grid>
-
-                            <Border Grid.Row="13" />
-                            <Button Grid.Row="13" Content="START LOG ANALYSIS" Click="OnAnalyseRunClick" Height="42" Background="{StaticResource AccentGreen}" Foreground="#1E222A" FontSize="14" Margin="0,0,0,10"/>
-                            <Button Grid.Row="14" Content="EXPORT REPORT" Click="OnSaveReportClick" Height="42" Background="{StaticResource PanelBorderBrush}" Foreground="{StaticResource TextHighlightBrush}" FontSize="14"/>
-                        </Grid>
-                    </Border>
-
-                    <Border Style="{StaticResource PremiumPanel}" Grid.Column="1" Margin="8,0,0,0">
-                        <Grid>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="*"/>
-                                <RowDefinition Height="Auto"/>
-                            </Grid.RowDefinitions>
-
-                            <Grid Grid.Row="0" Margin="0,0,0,10">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="Auto"/>
-                                    <ColumnDefinition Width="*"/>
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Grid.Column="0" Text="EXPECTED SEQUENCE" FontSize="12" Foreground="{StaticResource AccentBlue}" FontWeight="Heavy" HorizontalAlignment="Center"/>
-                                <TextBlock Grid.Column="2" Text="ACTUAL SEQUENCE (LOG)" FontSize="12" Foreground="{StaticResource AccentYellow}" FontWeight="Heavy" HorizontalAlignment="Center"/>
-                            </Grid>
-
-                            <Border Grid.Row="1" Background="#181A1F" BorderBrush="{StaticResource PanelBorderBrush}" BorderThickness="1" CornerRadius="4" Padding="10">
-                                <Grid>
+                                <TextBlock Grid.Row="0" Text="1. UPLOAD SDR LOG" FontSize="12" Foreground="{StaticResource AccentBlue}" FontWeight="Heavy"/>
+                                <Separator Grid.Row="1" Background="{StaticResource PanelBorderBrush}" Margin="0,10,0,15" Height="1"/>
+                                <Grid Grid.Row="2" Margin="0,0,0,15">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="20"/>
-                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
                                     </Grid.ColumnDefinitions>
-
-                                    <TreeView x:Name="ExpectedSequenceTree" Grid.Column="0" Background="Transparent" BorderThickness="0" Foreground="{StaticResource TextMainBrush}" Margin="0,10,0,0" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
-                                        <TreeView.Template>
-                                            <ControlTemplate TargetType="TreeView">
-                                                <ScrollViewer x:Name="PART_ExpectedScroller" HorizontalScrollBarVisibility="Disabled">
-                                                    <ItemsPresenter/>
-                                                </ScrollViewer>
-                                            </ControlTemplate>
-                                        </TreeView.Template>
-                                    </TreeView>
-
-                                    <TreeView x:Name="ActualSequenceTree" Grid.Column="2" Background="Transparent" BorderThickness="0" Foreground="{StaticResource TextMainBrush}" Margin="0,10,0,0" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
-                                        <TreeView.Template>
-                                            <ControlTemplate TargetType="TreeView">
-                                                <ScrollViewer x:Name="PART_ActualScroller" HorizontalScrollBarVisibility="Disabled">
-                                                    <ItemsPresenter/>
-                                                </ScrollViewer>
-                                            </ControlTemplate>
-                                        </TreeView.Template>
-                                    </TreeView>
-
-                                   
-
+                                    <TextBox x:Name="LogPathTextBox" Grid.Column="0" IsReadOnly="True" Height="34" VerticalContentAlignment="Center" Background="#1E222A" BorderBrush="{StaticResource PanelBorderBrush}" BorderThickness="1" Foreground="{StaticResource TextMainBrush}"/>
+                                    <Button Grid.Column="1" Content="BROWSE" Click="OnUploadLogClick" Width="80" Margin="5,0,0,0" Background="{StaticResource PanelBorderBrush}" Foreground="{StaticResource TextHighlightBrush}"/>
                                 </Grid>
-                            </Border>
 
-                            <Border Grid.Row="2" Background="#282C34" BorderBrush="{StaticResource PanelBorderBrush}" BorderThickness="1" CornerRadius="4" Margin="0,10,0,0" Padding="10">
+                                <TextBlock Grid.Row="3" Text="2. SELECT TARGET SEQUENCE" FontSize="12" Foreground="{StaticResource AccentYellow}" FontWeight="Heavy"/>
+                                <Separator Grid.Row="4" Background="{StaticResource PanelBorderBrush}" Margin="0,10,0,15" Height="1"/>
+                                <ComboBox x:Name="AnalysisSequenceComboBox" Grid.Row="5" Height="34" Margin="0,0,0,15" FontFamily="Consolas" FontSize="14" Background="#1E222A" Foreground="{StaticResource TextMainBrush}" BorderBrush="{StaticResource PanelBorderBrush}"/>
 
-                                <StackPanel Orientation="Vertical" HorizontalAlignment="Center">
-
-                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,10,0,5">
-
-                                        <Ellipse Width="12" Height="12" Fill="#98C379" Margin="0,0,5,0" VerticalAlignment="Center"/>
-                                        <TextBlock Text="Perfect Match" Foreground="#98C379" FontWeight="Bold" VerticalAlignment="Center" Margin="0,0,20,0"/>
-
-                                        <Ellipse Width="12" Height="12" Fill="#C678DD" Margin="0,0,5,0" VerticalAlignment="Center"/>
-                                        <TextBlock Text="Order Swapped" Foreground="#C678DD" FontWeight="Bold" VerticalAlignment="Center" Margin="0,0,20,0"/>
-
-                                        <Ellipse Width="12" Height="12" Fill="#E5C07B" Margin="0,0,5,0" VerticalAlignment="Center"/>
-                                        <TextBlock Text="Additional Events" Foreground="#E5C07B" FontWeight="Bold" VerticalAlignment="Center" Margin="0,0,20,0"/>
-
-                                        <Ellipse Width="12" Height="12" Fill="#E06C75" Margin="0,0,5,0" VerticalAlignment="Center"/>
-                                        <TextBlock Text="Missing Node" Foreground="#E06C75" FontWeight="Bold" VerticalAlignment="Center"/>
-
-                                    </StackPanel>
-
-                                    <TextBlock x:Name="AnalysisSummaryText" Text="Waiting for Analysis Run..." FontSize="14" Foreground="{StaticResource TextMainBrush}" FontWeight="Bold" HorizontalAlignment="Center"/>
-
+                                <TextBlock Grid.Row="9" Text="3. TIME RANGE SELECTION" FontSize="12" Foreground="{StaticResource AccentGreen}" FontWeight="Heavy" Margin="0,10,0,0"/>
+                                <Separator Grid.Row="10" Background="{StaticResource PanelBorderBrush}" Margin="0,10,0,10" Height="1"/>
+                                <StackPanel Grid.Row="11" Orientation="Horizontal" Margin="0,0,0,10">
+                                    <RadioButton x:Name="Tab2ShowAllRadio" Content="SHOW ALL EVENTS" IsChecked="True" Checked="Tab2TimeToggle_Checked"/>
+                                    <RadioButton x:Name="Tab2FilterRadio" Content="FILTER BY TIME" Checked="Tab2TimeToggle_Checked"/>
                                 </StackPanel>
 
-                            </Border>
-                        </Grid>
-                    </Border>
-                </Grid>
-            </TabItem>
+                                <Grid x:Name="Tab2TimeGrid" Grid.Row="12" Margin="0,0,0,20" Visibility="Collapsed">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="80"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
 
-            <TabItem Header=" LOG EXPLORER " Padding="15,8" FontSize="13" FontWeight="Bold">
-                <Grid Margin="0,15,0,0">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="350"/>
-                        <ColumnDefinition Width="*"/>
-                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Row="0" Grid.Column="0" Text="START:" FontSize="11" Foreground="{StaticResource TextMainBrush}" FontWeight="Heavy" VerticalAlignment="Center" Margin="0,0,10,10"/>
+                                    <DatePicker x:Name="Tab2StartDate" Grid.Row="0" Grid.Column="1" Height="30" Margin="0,0,10,10"/>
+                                    <TextBox x:Name="Tab2StartTime" Grid.Row="0" Grid.Column="2" Height="30" VerticalContentAlignment="Center" Background="#1E222A" BorderBrush="{StaticResource PanelBorderBrush}" BorderThickness="1" Foreground="{StaticResource TextMainBrush}" Margin="0,0,0,10" Padding="5,0" ToolTip="HH:mm:ss (e.g. 16:53:00)"/>
 
-                    <Border Style="{StaticResource PremiumPanel}" Grid.Column="0" Margin="0,0,8,0">
-                        <Grid>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="*"/>
-                                <RowDefinition Height="Auto"/>
-                            </Grid.RowDefinitions>
+                                    <TextBlock Grid.Row="1" Grid.Column="0" Text="END:" FontSize="11" Foreground="{StaticResource TextMainBrush}" FontWeight="Heavy" VerticalAlignment="Center"/>
+                                    <DatePicker x:Name="Tab2EndDate" Grid.Row="1" Grid.Column="1" Height="30" Margin="0,0,10,0"/>
+                                    <TextBox x:Name="Tab2EndTime" Grid.Row="1" Grid.Column="2" Height="30" VerticalContentAlignment="Center" Background="#1E222A" BorderBrush="{StaticResource PanelBorderBrush}" BorderThickness="1" Foreground="{StaticResource TextMainBrush}" Padding="5,0" ToolTip="HH:mm:ss (e.g. 16:55:00)"/>
+                                </Grid>
 
-                            <TextBlock Grid.Row="0" Text="1. SEARCH CRITERIA" FontSize="12" Foreground="{StaticResource AccentBlue}" FontWeight="Heavy"/>
-                            <Separator Grid.Row="1" Background="{StaticResource PanelBorderBrush}" Margin="0,10,0,15" Height="1"/>
+                                <Border Grid.Row="13" />
+                                <Button Grid.Row="14" Content="RUN ANALYSIS" Click="OnAnalyseRunClick" Height="42" Background="{StaticResource AccentGreen}" Foreground="#1E222A" FontSize="14" Margin="2,298,-2,-272"/>
+                                <Button Grid.Row="14" Content="EXPORT REPORT" Click="OnSaveReportClick" Height="42" Background="{StaticResource PanelBorderBrush}" Foreground="{StaticResource TextHighlightBrush}" FontSize="14" Margin="0,347,0,-321"/>
+                            </Grid>
+                        </Border>
 
-                            <TextBlock Grid.Row="2" Text="EVENT TYPE:" FontSize="11" Foreground="{StaticResource TextMainBrush}" FontWeight="Heavy" Margin="0,0,0,5"/>
-                            <ComboBox x:Name="SearchTypeComboBox" Grid.Row="3" Height="34" Margin="0,0,0,15" Background="#1E222A" Foreground="{StaticResource TextMainBrush}" BorderBrush="{StaticResource PanelBorderBrush}">
-                                <ComboBoxItem Content="ANY EVENT" IsSelected="True"/>
-                                <ComboBoxItem Content="DATA ID"/>
-                                <ComboBoxItem Content="CEID"/>
-                                <ComboBoxItem Content="REPORT ID"/>
-                            </ComboBox>
-
-                            <TextBlock Grid.Row="4" Text="SEARCH VALUE:" FontSize="11" Foreground="{StaticResource TextMainBrush}" FontWeight="Heavy" Margin="0,0,0,5"/>
-                            <TextBox x:Name="SearchValueTextBox" Grid.Row="5" Height="34" VerticalContentAlignment="Center" Background="#1E222A" BorderBrush="{StaticResource PanelBorderBrush}" BorderThickness="1" Foreground="{StaticResource TextHighlightBrush}" Margin="0,0,0,25" Padding="5,0"/>
-
-                            <TextBlock Grid.Row="6" Text="2. TIME RANGE SELECTION" FontSize="12" Foreground="{StaticResource AccentGreen}" FontWeight="Heavy"/>
-                            <Separator Grid.Row="7" Background="{StaticResource PanelBorderBrush}" Margin="0,10,0,10" Height="1"/>
-                            <StackPanel Grid.Row="8" Orientation="Horizontal" Margin="0,0,0,10">
-                                <RadioButton x:Name="Tab3ShowAllRadio" Content="SHOW ALL EVENTS" IsChecked="True" Checked="Tab3TimeToggle_Checked"/>
-                                <RadioButton x:Name="Tab3FilterRadio" Content="FILTER BY TIME" Checked="Tab3TimeToggle_Checked"/>
-                            </StackPanel>
-
-                            <Grid x:Name="Tab3TimeGrid" Grid.Row="9" Margin="0,0,0,20" Visibility="Collapsed">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto"/>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="80"/>
-                                </Grid.ColumnDefinitions>
+                        <Border Style="{StaticResource PremiumPanel}" Grid.Column="1" Margin="8,0,0,0">
+                            <Grid>
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="*"/>
                                     <RowDefinition Height="Auto"/>
                                 </Grid.RowDefinitions>
 
-                                <TextBlock Grid.Row="0" Grid.Column="0" Text="START:" FontSize="11" Foreground="{StaticResource TextMainBrush}" FontWeight="Heavy" VerticalAlignment="Center" Margin="0,0,10,10"/>
-                                <DatePicker x:Name="Tab3StartDate" Grid.Row="0" Grid.Column="1" Height="30" Margin="0,0,10,10"/>
-                                <TextBox x:Name="Tab3StartTime" Grid.Row="0" Grid.Column="2" Height="30" VerticalContentAlignment="Center" Background="#1E222A" BorderBrush="{StaticResource PanelBorderBrush}" BorderThickness="1" Foreground="{StaticResource TextMainBrush}" Margin="0,0,0,10" Padding="5,0" ToolTip="HH:mm:ss"/>
+                                <Grid Grid.Row="0" Margin="0,0,0,10">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="EXPECTED SEQUENCE" FontSize="12" Foreground="{StaticResource AccentBlue}" FontWeight="Heavy" HorizontalAlignment="Center"/>
+                                    <TextBlock Grid.Column="2" Text="ACTUAL SEQUENCE (LOG)" FontSize="12" Foreground="{StaticResource AccentYellow}" FontWeight="Heavy" HorizontalAlignment="Center"/>
+                                </Grid>
 
-                                <TextBlock Grid.Row="1" Grid.Column="0" Text="END:" FontSize="11" Foreground="{StaticResource TextMainBrush}" FontWeight="Heavy" VerticalAlignment="Center"/>
-                                <DatePicker x:Name="Tab3EndDate" Grid.Row="1" Grid.Column="1" Height="30" Margin="0,0,10,0"/>
-                                <TextBox x:Name="Tab3EndTime" Grid.Row="1" Grid.Column="2" Height="30" VerticalContentAlignment="Center" Background="#1E222A" BorderBrush="{StaticResource PanelBorderBrush}" BorderThickness="1" Foreground="{StaticResource TextMainBrush}" Padding="5,0" ToolTip="HH:mm:ss"/>
+                                <Border Grid.Row="1" Background="#FF282828" BorderBrush="{StaticResource PanelBorderBrush}" BorderThickness="1" CornerRadius="4" Padding="10">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="20"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+
+                                        <TreeView x:Name="ExpectedSequenceTree" Grid.Column="0" Background="Black" BorderThickness="0" Foreground="{StaticResource TextMainBrush}" Margin="0,10,0,0" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                                            <TreeView.Template>
+                                                <ControlTemplate TargetType="TreeView">
+                                                    <ScrollViewer x:Name="PART_ExpectedScroller" HorizontalScrollBarVisibility="Disabled">
+                                                        <ItemsPresenter/>
+                                                    </ScrollViewer>
+                                                </ControlTemplate>
+                                            </TreeView.Template>
+                                        </TreeView>
+
+                                        <TreeView x:Name="ActualSequenceTree" Grid.Column="2" Background="#FF282828" BorderThickness="0" Foreground="{StaticResource TextMainBrush}" Margin="0,10,0,0" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                                            <TreeView.Template>
+                                                <ControlTemplate TargetType="TreeView">
+                                                    <ScrollViewer x:Name="PART_ActualScroller" HorizontalScrollBarVisibility="Disabled">
+                                                        <ItemsPresenter/>
+                                                    </ScrollViewer>
+                                                </ControlTemplate>
+                                            </TreeView.Template>
+                                        </TreeView>
+                                    </Grid>
+                                </Border>
+
+                                <Border Grid.Row="2" Background="#282C34" BorderBrush="{StaticResource PanelBorderBrush}" BorderThickness="1" CornerRadius="4" Margin="0,10,0,0" Padding="10">
+                                    <StackPanel Orientation="Vertical" HorizontalAlignment="Center">
+                                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,10,0,5">
+                                            <Ellipse Width="12" Height="12" Fill="#98C379" Margin="0,0,5,0" VerticalAlignment="Center"/>
+                                            <TextBlock Text="Perfect Match" Foreground="#98C379" FontWeight="Bold" VerticalAlignment="Center" Margin="0,0,20,0"/>
+
+                                            <Ellipse Width="12" Height="12" Fill="#C678DD" Margin="0,0,5,0" VerticalAlignment="Center"/>
+                                            <TextBlock Text="Order Swapped" Foreground="#C678DD" FontWeight="Bold" VerticalAlignment="Center" Margin="0,0,20,0"/>
+
+                                            <Ellipse Width="12" Height="12" Fill="#E5C07B" Margin="0,0,5,0" VerticalAlignment="Center"/>
+                                            <TextBlock Text="Additional Events" Foreground="#E5C07B" FontWeight="Bold" VerticalAlignment="Center" Margin="0,0,20,0"/>
+
+                                            <Ellipse Width="12" Height="12" Fill="#E06C75" Margin="0,0,5,0" VerticalAlignment="Center"/>
+                                            <TextBlock Text="Missing Node" Foreground="#E06C75" FontWeight="Bold" VerticalAlignment="Center"/>
+                                        </StackPanel>
+                                        <TextBlock x:Name="AnalysisSummaryText" Text="Waiting for Analysis Run..." FontSize="14" Foreground="{StaticResource TextMainBrush}" FontWeight="Bold" HorizontalAlignment="Center"/>
+                                    </StackPanel>
+                                </Border>
                             </Grid>
+                        </Border>
+                    </Grid>
+                </TabItem>
 
-                            <Border Grid.Row="10" />
-                            <Button Grid.Row="11" Content="EXECUTE SEARCH" Click="OnSearchLogsClick" Height="42" Background="{StaticResource AccentYellow}" Foreground="#1E222A" FontSize="14"/>
-                        </Grid>
-                    </Border>
+                <TabItem Header="3. LOG EXPLORER " Padding="15,8" FontSize="13" FontWeight="Bold">
+                    <Grid Margin="0,15,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="350"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
 
-                    <Border Style="{StaticResource PremiumPanel}" Grid.Column="1" Margin="8,0,0,0">
-                        <Grid>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="*"/>
-                                <RowDefinition Height="Auto"/>
-                            </Grid.RowDefinitions>
+                        <Border Style="{StaticResource PremiumPanel}" Grid.Column="0" Margin="0,0,8,0">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="*"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
 
-                            <Grid Grid.Row="0">
-                                <TextBlock Text="SEARCH RESULTS" FontSize="12" Foreground="{StaticResource AccentYellow}" FontWeight="Heavy" VerticalAlignment="Center"/>
-                                <ToggleButton x:Name="ViewModeToggle" Content="SHOW ALL DATA" Click="OnToggleViewClick" HorizontalAlignment="Right" Background="{StaticResource PanelBorderBrush}" Foreground="{StaticResource AccentYellow}" FontWeight="Bold" Padding="10,2"/>
+                                <TextBlock Grid.Row="0" Text="1. SEARCH CRITERIA" FontSize="12" Foreground="{StaticResource AccentBlue}" FontWeight="Heavy"/>
+                                <Separator Grid.Row="1" Background="{StaticResource PanelBorderBrush}" Margin="0,10,0,15" Height="1"/>
+
+                                <TextBlock Grid.Row="2" Text="EVENT TYPE:" FontSize="11" Foreground="{StaticResource TextMainBrush}" FontWeight="Heavy" Margin="0,0,0,5"/>
+                                <ComboBox x:Name="SearchTypeComboBox" Grid.Row="3" Height="34" Margin="0,0,0,15" Background="#1E222A" Foreground="{StaticResource TextMainBrush}" BorderBrush="{StaticResource PanelBorderBrush}">
+                                    <ComboBoxItem Content="ANY EVENT" IsSelected="True"/>
+                                    <ComboBoxItem Content="DATA ID"/>
+                                    <ComboBoxItem Content="CEID"/>
+                                    <ComboBoxItem Content="REPORT ID"/>
+                                </ComboBox>
+
+                                <TextBlock Grid.Row="4" Text="SEARCH VALUE:" FontSize="11" Foreground="{StaticResource TextMainBrush}" FontWeight="Heavy" Margin="0,0,0,5"/>
+                                <TextBox x:Name="SearchValueTextBox" Grid.Row="5" Height="34" VerticalContentAlignment="Center" Background="#1E222A" BorderBrush="{StaticResource PanelBorderBrush}" BorderThickness="1" Foreground="{StaticResource TextHighlightBrush}" Margin="0,0,0,25" Padding="5,0"/>
+
+                                <TextBlock Grid.Row="6" Text="2. TIME RANGE SELECTION" FontSize="12" Foreground="{StaticResource AccentGreen}" FontWeight="Heavy"/>
+                                <Separator Grid.Row="7" Background="{StaticResource PanelBorderBrush}" Margin="0,10,0,10" Height="1"/>
+                                <StackPanel Grid.Row="8" Orientation="Horizontal" Margin="0,0,0,10">
+                                    <RadioButton x:Name="Tab3ShowAllRadio" Content="SHOW ALL EVENTS" IsChecked="True" Checked="Tab3TimeToggle_Checked"/>
+                                    <RadioButton x:Name="Tab3FilterRadio" Content="FILTER BY TIME" Checked="Tab3TimeToggle_Checked"/>
+                                </StackPanel>
+
+                                <Grid x:Name="Tab3TimeGrid" Grid.Row="9" Margin="0,0,0,20" Visibility="Collapsed">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="80"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+
+                                    <TextBlock Grid.Row="0" Grid.Column="0" Text="START:" FontSize="11" Foreground="{StaticResource TextMainBrush}" FontWeight="Heavy" VerticalAlignment="Center" Margin="0,0,10,10"/>
+                                    <DatePicker x:Name="Tab3StartDate" Grid.Row="0" Grid.Column="1" Height="30" Margin="0,0,10,10"/>
+                                    <TextBox x:Name="Tab3StartTime" Grid.Row="0" Grid.Column="2" Height="30" VerticalContentAlignment="Center" Background="#1E222A" BorderBrush="{StaticResource PanelBorderBrush}" BorderThickness="1" Foreground="{StaticResource TextMainBrush}" Margin="0,0,0,10" Padding="5,0" ToolTip="HH:mm:ss"/>
+
+                                    <TextBlock Grid.Row="1" Grid.Column="0" Text="END:" FontSize="11" Foreground="{StaticResource TextMainBrush}" FontWeight="Heavy" VerticalAlignment="Center"/>
+                                    <DatePicker x:Name="Tab3EndDate" Grid.Row="1" Grid.Column="1" Height="30" Margin="0,0,10,0"/>
+                                    <TextBox x:Name="Tab3EndTime" Grid.Row="1" Grid.Column="2" Height="30" VerticalContentAlignment="Center" Background="#1E222A" BorderBrush="{StaticResource PanelBorderBrush}" BorderThickness="1" Foreground="{StaticResource TextMainBrush}" Padding="5,0" ToolTip="HH:mm:ss"/>
+                                </Grid>
+
+                                <Border Grid.Row="10" />
+                                <Button Grid.Row="11" Content=" SEARCH" Click="OnSearchLogsClick" Height="42" Background="{StaticResource AccentYellow}" Foreground="#1E222A" FontSize="14"/>
                             </Grid>
+                        </Border>
 
-                            <Separator Grid.Row="1" Background="{StaticResource PanelBorderBrush}" Margin="0,10,0,10" Height="1"/>
+                        <Border Style="{StaticResource PremiumPanel}" Grid.Column="1" Margin="8,0,0,0">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="*"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
 
-                            <DataGrid x:Name="SearchResultsGrid" Grid.Row="2" AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True">
-                                <DataGrid.Columns>
-                                    <!--<DataGridTextColumn Header="Line #" Binding="{Binding LineNumber}" Width="80"/-->
-                                    <DataGridTextColumn Header="SDR Msg" Binding="{Binding SdrMessage}" Width="100"/>
-                                    <DataGridTextColumn Header="Message" Binding="{Binding Protocol}" Width="80"/>
-                                    <DataGridTextColumn Header="W" Binding="{Binding WaitBit}" Width="30"/>
-                                    <DataGridTextColumn Header="Date" Binding="{Binding LogDate}" Width="90"/>
-                                    <DataGridTextColumn Header="Time" Binding="{Binding LogTime}" Width="90"/>
-                                    <DataGridTextColumn Header="Data ID" Binding="{Binding DataID}" Width="70"/>
-                                    <DataGridTextColumn Header="CEID" Binding="{Binding CEID}" Width="70"/>
-                                    <DataGridTextColumn Header="Report ID" Binding="{Binding ReportID}" Width="*"/>
-                                </DataGrid.Columns>
-                            </DataGrid>
+                                <Grid Grid.Row="0">
+                                    <TextBlock Text="SEARCH RESULTS" FontSize="12" Foreground="{StaticResource AccentYellow}" FontWeight="Heavy" VerticalAlignment="Center"/>
+                                    <ToggleButton x:Name="ViewModeToggle" Content="SHOW ALL DATA" Click="OnToggleViewClick" HorizontalAlignment="Right" Background="{StaticResource PanelBorderBrush}" Foreground="{StaticResource AccentYellow}" FontWeight="Bold" Padding="10,2"/>
+                                </Grid>
 
-                            <TextBlock x:Name="ExploreStatsText" Grid.Row="3" Text="Found: 0 events" Foreground="{StaticResource AccentBlue}" FontWeight="Bold" Margin="0,10,0,0"/>
-                        </Grid>
-                    </Border>
+                                <Separator Grid.Row="1" Background="{StaticResource PanelBorderBrush}" Margin="0,10,0,10" Height="1"/>
+
+                                <DataGrid x:Name="SearchResultsGrid" Grid.Row="2" AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="SDR Msg" Binding="{Binding SdrMessage}" Width="100"/>
+                                        <DataGridTextColumn Header="Message" Binding="{Binding Protocol}" Width="100"/>
+                                        <DataGridTextColumn Header="Date" Binding="{Binding LogDate}" Width="100"/>
+                                        <DataGridTextColumn Header="Time" Binding="{Binding LogTime}" Width="100"/>
+
+                                        <!--<DataGridTextColumn Header="Data ID" Binding="{Binding DataID}" Width="70"/>
+                                        <DataGridTextColumn Header="CEID" Binding="{Binding CEID}" Width="70"/>
+                                        <DataGridTextColumn Header="Report ID" Binding="{Binding ReportID}" Width="*"/>-->
+                                    </DataGrid.Columns>
+                                </DataGrid>
+
+                                <TextBlock x:Name="ExploreStatsText" Grid.Row="3" Text="Found: 0 events" Foreground="{StaticResource AccentBlue}" FontWeight="Bold" Margin="0,10,0,0"/>
+                            </Grid>
+                        </Border>
+                    </Grid>
+                </TabItem>
+            </TabControl>
+        </Grid>
+        <Grid x:Name="CeidModal" Grid.ColumnSpan="2" Panel.ZIndex="2000" Visibility="Collapsed" Background="#B2000000">
+            <Border Background="#1E222A" BorderBrush="#3E4451" BorderThickness="2" CornerRadius="8" Width="500" Height="450" VerticalAlignment="Center" HorizontalAlignment="Center" Padding="15">
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="20" ShadowDepth="5" Opacity="0.5"/>
+                </Border.Effect>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Grid.Row="0" Text="📖 CEID DICTIONARY" Foreground="#61AFEF" FontSize="16" FontWeight="Bold" Margin="0,0,0,10"/>
+
+                    <!-- Upgraded Editable DataGrid -->
+                        <DataGrid x:Name="CeidDataGrid" Grid.Row="1" AutoGenerateColumns="False" CanUserAddRows="True" Background="#282C34" BorderBrush="#3E4451" Foreground="White" Margin="0,0,0,15">
+                            <DataGrid.Columns>
+                                <!-- Added Mode=TwoWay so your typing actually saves to the list! -->
+                                <DataGridTextColumn Header="CEID" Binding="{Binding ID, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Width="100"/>
+                                <DataGridTextColumn Header="Event Name (Description)" Binding="{Binding Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Width="*"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+
+                        <!-- Bottom Buttons with new ADD button -->
+                        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right">
+                            <Button Content="+ ADD NEW" Click="BtnAddCeidRow_Click" Background="#61AFEF" Foreground="Black" Width="90" Margin="0,0,10,0" FontWeight="Bold"/>
+                            <Button Content="CANCEL" Click="BtnCloseCeidModal_Click" Background="#3E4451" Foreground="White" Width="80" Margin="0,0,10,0"/>
+                            <Button Content="SAVE DICTIONARY" Click="BtnSaveCeids_Click" Background="#98C379" Foreground="Black" Padding="15,0"/>
+                        </StackPanel>
+
+                        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button Content="CANCEL" Click="BtnCloseCeidModal_Click" Background="#3E4451" Foreground="White" Width="80" Margin="0,0,10,0"/>
+                        <Button Content="SAVE DICTIONARY" Click="BtnSaveCeids_Click" Background="#98C379" Foreground="Black" Padding="15,0"/>
+                    </StackPanel>
+                
                 </Grid>
-            </TabItem>
-        </TabControl>
+            </Border>
+        </Grid>
+
+        <Border x:Name="AiSidebar" Grid.Column="1" Visibility="Collapsed" Width="350" Background="#1E222A" BorderBrush="#3E4451" BorderThickness="1,0,0,0">
+            <Border.Effect>
+                <DropShadowEffect BlurRadius="15" ShadowDepth="-5" Opacity="0.5" Color="Black"/>
+            </Border.Effect>
+
+            <Grid Margin="15">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                
+
+                <!--StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,10">
+                    <TextBlock Text="✨" Foreground="#E5C07B" FontSize="16" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                    <TextBlock Text="LEO,THE AI ASSISTANT" Foreground="#61AFEF" FontWeight="Bold" FontSize="14" VerticalAlignment="Center"/>
+                </StackPanel>
+
+                <ScrollViewer Grid.Row="1" x:Name="AiChatScroller" VerticalScrollBarVisibility="Auto" Margin="0,0,0,10">
+                    <StackPanel x:Name="AiChatHistoryPanel"/>
+                </ScrollViewer>-->
+
+                <!--<Grid Grid.Row="2">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <TextBox x:Name="AiInputBox" Grid.Column="0" Height="40" Background="#282C34" Foreground="White" 
+                             BorderBrush="#3E4451" VerticalContentAlignment="Center" Padding="5,0,0,0" 
+                             KeyDown="AiInputBox_KeyDown" TextWrapping="Wrap" />
+
+                    <Button x:Name="BtnSendAi" Grid.Column="1" Content="SEND" Width="60" Margin="5,0,0,0" 
+                            Background="#98C379" Foreground="Black" FontWeight="Bold" Click="BtnSendAi_Click"/>
+                </Grid>-->
+            </Grid>
+        </Border>
     </Grid>
 </Window>

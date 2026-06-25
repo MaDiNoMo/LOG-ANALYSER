@@ -30,6 +30,7 @@ namespace LOG_EZ
         public string AttrData { get; set; } = "-";
 
         public int LineNumber { get; set; }
+        public string S16DataID { get; internal set; }
 
         public string GetSignature() => Protocol switch
         {
