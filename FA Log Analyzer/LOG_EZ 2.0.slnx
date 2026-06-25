@@ -1,3 +1,11 @@
 <Solution>
-  <Project Path="LOG_EZ 2.0/LOG_EZ 2.0.csproj" />
+  <Configurations>
+    <Platform Name="Any CPU" />
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Project Path="LOG_EZ 2.0/LOG_EZ 2.0.csproj">
+    <Platform Solution="*|x64" Project="x64" />
+  </Project>
+  <Project Path="SdrParserEngine/SdrParserEngine.vcxproj" Id="7e9899bb-13bb-4d6e-9fff-48d8e6462229" />
 </Solution>
